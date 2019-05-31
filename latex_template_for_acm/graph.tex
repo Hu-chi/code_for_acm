@@ -1,0 +1,1163 @@
+\subsection{存图}
+
+二维矩阵
+
+\begin{lstlisting}
+int mp[N][N];
+void read(){
+    for (int i = 1; i <= n; i++) 
+        for (int j = 1; j <= n; j++)  scanf("%d", mp[i][j]);
+}
+\end{lstlisting}
+
+邻接矩阵
+
+\begin{lstlisting}
+vector<int> mp[N];
+void read(){
+    for (int i = 0; i < m; i++) {
+        scanf("%d%d", &u, &v);
+        mp[u].push_back(v); mp[v].push_back(u);
+    }
+}
+\end{lstlisting}
+
+链式前向星：
+
+\begin{lstlisting}
+int head[N], cnt;
+struct Edge{ int v, nxt; }e[N<<1];
+
+void ad(int u, int v) { e[cnt]={v, head[u]}; head[u] = cnt++; }
+void add(int u, int v) { ad(u, v); ad(v, u); }
+void init(){ cnt = 0; memset(head, -1, size of head); }
+
+void read(){
+    for (int i = 0; i < m; i++) { scanf("%d%d", &u, &v); add(u, v); }
+}
+\end{lstlisting}
+
+\subsection{最短路}
+
+\subsubsection{Dijkstra}
+
+\begin{lstlisting}
+void Dijkstra(int s){
+    memset(d, 0x3f, sizeof d);
+    memset(vis, 0, sizeof vis);
+    priority_queue<pair<int, int> > q; d[s] = 0;
+    q.push(make_pair(-d[s], s));
+    while(!q.empty()) {
+        pair<int, int> tp = q.top(); q.pop();
+        int u = tp.second;
+        if(vis[u]) continue; 
+        vis[u] = 1;
+        for (int i = head[u]; ~i; i = e[i].nxt){
+            int v = e[i].v;
+            if(d[u] + e[i].w < d[v] && !vis[v]) {
+                d[v] = d[u] + e[i].w;
+                q.push(make_pair(-(d[v]), v));
+            }
+        }
+    }
+}
+\end{lstlisting}
+
+\subsubsection{bfs找最短路}
+
+\begin{lstlisting}
+void bfs(){
+    memset(vis, 0, sizeof vis);
+    memset(d, -1, sizeof d); d[s] = 0;
+    queue<int> q; q.push(s);
+    while(!q.empty()){
+        int u = q.front(); q.pop();
+        for(int i = head[u]; ~i; i = e[i].nxt){
+            int v = e[i].v;
+            if(d[v]==-1){ d[v] = d[u] + 1;  q.push(v); }
+        }
+    }
+}
+\end{lstlisting}
+
+\subsubsection{spfa判负环}
+
+\begin{lstlisting}
+bool spfa(){
+    memset(vis, 0, sizeof vis); memset(d, 0, sizeof d);
+    d[s] = 0; vis[s] = 1; deque<int> q; q.push_back(s);
+    while(!q.empty()) {
+        int u = q.front(); q.pop_front(); vis[u] = 0;
+        for (int i = head[u]; ~i; i = e[i].nxt) {
+            int v = e[i].v;
+            if(d[v] > d[u] + e[i].c) {
+                cnt[v] ++;
+                if(cnt[v] > n) return 1;
+                d[v] = d[u] + e[i].c;
+                if(!vis[v]) {
+                    vis[v] = 1;
+                    if(!q.empty() && d[v] < d[q.front()]) q.push_front(v);
+                    else q.push_back(v);
+                }
+            }
+        }
+    } return 0;
+}
+\end{lstlisting}
+
+\subsubsection{flyod}
+
+\begin{lstlisting}
+for (int k = 1; k <= n; k++) for (int i = 1; i <= n; i++)
+for (int j = 1; j <= n; j++)
+	mp[i][j] = min(mp[i][j], mp[i][k] + mp[k][j]);
+
+bitset<N> mp[N]; // `声明二维矩阵0表示不连通，1联通`
+for (int k = 1; k <= n; ++k) for (int i = 1; i <= n; ++i) 
+	if (e[i][k]) e[i] |= e[k];
+\end{lstlisting}
+
+
+\subsection{最小生成树}
+
+prim:
+
+\begin{lstlisting}
+inline void prim(){
+    int di,v;
+    for(int i = 0; i < n; i++) { d[i] = mp[0][i]; vis[i] = 0; }
+    for(int i = 1; i <= n; i++) {
+        di = inf;
+        for(int j = 0; j < n; j++) 
+            if(!vis[j] && di > d[j]){ v = j; di = d[j]; }
+        vis[v] = 1;
+        for(int j = 0; j < n; j++)
+            if(!vis[j] && d[j] > mp[v][j]) d[j] = mp[v][j];
+    }
+}
+\end{lstlisting}
+kruskal
+\begin{lstlisting}
+void init(){ for(int i = 1; i <maxn; i++) pre[i] = i; }
+int Find(int x){ return x==fa[x]?x:fa[x]=Find(fa[x]); }
+
+int join(int x, int y){
+    int fx = Find(x),fy = Find(y);
+    if(fx != fy){ fa[fy] = fx; return 1; }
+    return 0;
+}
+
+void kruskal(){
+    sort(e,e+m,cmp);
+    int cont = 0,sum = 0;
+    for(int i = 0; i < m; i++){
+        if(join(e[i].u,e[i].v)){
+            cont++;
+            sum+=e[i].w;
+        } if(cont == n-1) break;
+    } printf("%d\n",sum);
+}
+\end{lstlisting}
+
+\subsection{匹配}
+二分图匹配
+\begin{lstlisting}
+bool Find(int x){
+    for(int i = 1; i <= c; i++) {
+        if(mp[x][i]&&!used[i]) {
+            used[i] = 1;
+            if(!f[i]||Find(f[i])) {
+                f[i] = x; return 1;
+            }
+        }
+    } return 0;
+}
+for(int i = 1; i <= r; i++){
+    memset(used, 0, sizeof used);
+    if(Find(i)) ans++;
+}
+\end{lstlisting}
+
+\begin{lstlisting}
+bool Find(int s) {
+    for(int i = head[s]; ~i; i = e[i].nxt) {
+        int v = e[i].v;
+        if(!used[v]&&dy[v]==dx[s]+1){
+            used[v] = 1;
+            if(my[v]!=-1&&dy[v]==dss)continue;
+            if(my[v]==-1||Find(my[v])){ my[v] = s; mx[s] = v; return 1; }
+        }
+    } return 0;
+}
+inline void init() { memset(head, -1, sizeof head); memset(f, 0, sizeof f); tot = 0; }
+inline void add(int u, int v) { e[tot] = {v, head[u]}; head[u] = tot++; }
+
+inline int dis(int i, int u, int v) {
+    return (x[i]-u)*(x[i]-u)+(y[i]-v)*(y[i]-v);
+}
+const int inf = 0x3f3f3f3f;
+bool searchP() {
+    queue<int> q; dss = inf;
+    memset(dy, -1, sizeof dy); memset(dx, -1, sizeof dx);
+    for(int i = 1; i <= n; i++){
+        if(mx[i] == -1) { q.push(i); dx[i] = 0; }
+    } while(!q.empty()) {
+        int u = q.front(); q.pop();
+        if(dx[u]>dss) break;
+        for (int i = head[u]; ~i; i = e[i].nxt) {
+            int v = e[i].v;
+            if(dy[v] == -1) {
+                dy[v] = dx[u] + 1;
+                if(my[v]==-1) dss=dy[v];
+                else {
+                    dx[my[v]] = dy[v]+1;
+                    q.push(my[v]);
+                }
+            }
+        }
+    } return dss!=inf;
+}
+
+int slove(){
+    int ans = 0;
+    memset(mx, -1, sizeof mx); memset(my, -1, sizeof my);
+    while(searchP()) {
+        memset(used, 0, sizeof used);
+        for(int i = 1; i <= n; i++)
+            if(mx[i] == -1 && Find(i)) ans++;
+    } return ans;
+}
+\end{lstlisting}
+
+
+\subsection{强连通分量}
+其实并不怎么会,割点割桥,双联通
+\begin{lstlisting}
+void tarjan(int u){
+    int v;
+    low[u] = dfn[u] = ++idx;
+    top++[stck] = u;
+    inStack[u] = 1;
+    for (int i = head[u]; ~i; i = e[i].nxt) {
+        v = e[i].v;
+        if(!dfn[v]) {
+            tarjan(v);
+            if(low[u] > low[v])
+                low[u] = low[v];
+            } else if(inStack[v] && low[u] > dfn[v]) {
+                low[u] = dfn[v];
+            }
+    }
+    if(low[u] == dfn[u]) {
+        scc++;
+        do {
+            v = stck[--top];
+            be[v] = scc;
+            inStack[v] = 0;
+        } while(v!=u);
+    }
+}
+\end{lstlisting}
+
+
+\subsection{网络流}
+
+
+基本概念 
+
+求解可行流: 给定一个网络流图, 初始时每个节点不一定平衡 (每个节点可以有盈余或不足), 每条边的流量可以有上下界, 每条边的当前流量可以不满足上下界约束. 可行流求解中一般没有源和汇的概念, 算法的目的是寻找一个可以使所有节点都能平衡, 所有边都能满足流量约束的方案, 同时可能附加有最小费用的条件 (最小费用可行流). 
+
+求解最大流: 给定一个网络流图, 其中有两个特殊的节点称为源和汇. 除源和汇之外, 给定的每个节点一定平衡. 源可以产生无限大的流量, 汇可以吸收无限大的流量. 标准的最大流模型, 初始解一定是可行的 (例如, 所有边流量均为零), 因此边上不能有下界. 算法的目的是寻找一个从源到汇流量最大的方案, 同时不破坏可行约束, 并可能附加有最小费用的条件 (最小费用最大流). 
+
+扩展的最大流: 在有上下界或有节点盈余的网络流图中求解最大流. 实际上包括两部分, 先是消除下界, 消除盈余, 可能还需要消除不满足最优条件的流量 (最小费用流), 找到一个可行流, 再进一步得到最大流. 因此这里我们的转化似乎是从最大流转化为可行流再变回最大流, 但其实质是将一个过程 (扩展的最大流) 变为了两个过程 (可行流 + 最大流). 
+
+\subsubsection{最大流}
+
+关于网络流的问题，其重点在于如何建图，而对于算法细节，其实不太重要，一般常用Dinic， 建立分层图来增广，实现起来比较简单，也有isap的，其复杂度上线都是O($n^2m$),  不过实际上isap的算法时间非常占优势，不过没有Dinic容易实现。
+
+{\bfseries Dinic}
+
+\begin{lstlisting}
+bool bfs(){ // `建立分层图并判别能否到达汇点t.`
+    memset(d, 0, sizeof d); d[s] = 1;
+    queue<int> q; q.push(s);
+    while(!q.empty()){
+        int u = q.front(); q.pop();
+        for(int i = head[u]; ~i; i = e[i].nxt){
+            int v = e[i].v;
+            if(!d[v] && e[i].w>0){
+                d[v] = d[u] + 1; q.push(v);
+                if(v == t) return 1;
+            }
+        }
+    } return 0;
+}
+
+int dfs(int u, int w){ // `增广`
+    if(u == t || w == 0) return w;
+    int dlt = w; // `剩余流量`
+    for(int &i = cur[u]; i != -1; i = e[i].nxt){
+        int v = e[i].v;
+        if(d[v] == d[u] + 1 && e[i].w > 0){
+            int x = dfs(v, min(dlt, e[i].w));
+            e[i].w -= x; e[i^1].w += x;
+            dlt -= x; if(!dlt)return w;
+        }
+    } return w-dlt;
+}
+
+int dinic(){
+    int sum = 0;
+    while(bfs()) { // `最多n次增广`
+        for(int i = 0; i <= n; i++) cur[i] = head[i];
+        sum += dfs(s, inf);
+    } return sum;
+}
+\end{lstlisting}
+
+
+{\bfseries 问题1:项目发展规划(Develop) }
+
+Macrosoft® 公司准备制定一份未来的发展规划。公司各部门提出的发展项目汇总成了一张规划表，该表包含了许多项目。对于每个项目，规划表中都给出了它所需的投资或预计的盈利。由于某些项目的实施必须依赖于其它项目的开发成果，所以如果要实施这个项目的话，它所依赖的项目也是必不可少的。现在请你担任Macrosoft公司的总裁，从这些项目中挑选出一部分，使你的公司获得最大的净利润。
+
+答： 建立N顶点代表N个项目，另外增加源s与汇t。若项目i必须依赖于项目j，则从顶点i向顶点j引一条容量为无穷大的弧。对于每个项目i，若它的预算$C_i$为正（盈利），则从源s向顶点i引一条容量为$C_i$的边；若它的预算$C_i$为负（投资），则从顶点i向汇t引一条容量为-$C_i$的边。求这个网络的最小割（S, T），设其容量C(S,T)＝F。设R为所有盈利项目的预算之和（净利润上界），那么R-F就是最大净利润；S中的顶点就表示最优方案所选择的项目。
+
+根据最大流最小割定理，网络的最小割可以通过最大流的方法求得.
+
+{\bfseries 最大权闭合子图}
+
+所谓闭合子图就是给定一个有向图，从中选择一些点组成一个点集V。对于V中任意一个点，其后续节点都仍然在V中 。
+
+所以求解闭合子图中所有点权值最大的问题就是最大权闭合子图问题。
+
+结论：最大权闭合子图 = 正点和-最小割。 
+
+最小割可以利用最大流来解决. 设置源点与值为正的点建边，边权为点权，汇点与值为负的点建边，边权为点权绝对值，其他边的权值均为无穷，求得的最大流即最小割。
+
+{\bfseries CF 498C}
+
+题意：给出一组数，然后给出他们之间的边，构成一张由奇数点和偶数点组成的二分图，然后存在边的数可以除以他们的公约数，问最多的操作次数。
+
+我们对于每个数都去计算他所有的因数和个数，我们可以将一个奇数点和偶数点都拆成他和他的因子们，那么每次同除左右的两个数也就是流过了具有相同因数的两个数所组成的边，所以最多的操作个数就可以跑一次最大流。具体建图方式见代码。
+
+\begin{lstlisting}
+#include <bits/stdc++.h>
+const int N = 1e5+9;
+const int inf = 1e9+9;
+using namespace std;
+
+int head[N], prime[N], d[N], a[N], idx[111], sum[111];
+int n, m, tot, cnt, s, t;
+bool vis[N];
+/**  --------------------------- `最大流` ------------------------------------------ **/
+struct Edge{int u,v, w, nxt;}e[N<<1];
+void ad(int u, int v, int w){e[cnt]={u,v,w,head[u]};head[u]=cnt++;}
+void add(int u, int v, int w){ad(u, v, w); ad(v, u, 0);}
+
+bool bfs(){
+    for (int i = 0; i <= t; i++) d[i] = 0;
+    d[s] = 1; queue<int> q; q.push(s);
+    while(!q.empty()){
+        int u = q.front(); q.pop();
+        for (int i = head[u]; ~i; i = e[i].nxt) {
+            int v = e[i].v;
+            if(!d[v] && e[i].w > 0) {
+                d[v] = d[u] + 1;
+                if(v == t) return 1;
+                q.push(v);
+            }
+        }
+    } return 0;
+}
+
+int dfs(int u, int w) {
+    if(u == t || w == 0) return w;
+    int dlt=w, x;
+    for (int i = head[u]; ~i; i = e[i].nxt) {
+        int v = e[i].v;
+        if(e[i].w > 0 && d[v] == d[u] + 1) {
+            x = dfs(v, min(dlt, e[i].w));
+            e[i].w -= x; e[i^1].w += x;
+            dlt -= x; if(!dlt) return w;
+        }
+    } return w - dlt;
+}
+
+int dinic(){
+    int sum = 0;
+    while(bfs()) {
+        sum += dfs(s, inf);
+    } return sum;
+}
+/**  --------------------------- `最大流` ------------------------------------------ **/
+void init(){
+    cnt = 0;  // `先使用欧拉筛预处理1e5以下的质数`
+    for (int i = 2; i < N; i++) {
+        if(!vis[i]) prime[tot++] = i;
+        for (int j = 0; j < tot; j++) {
+            if(i*prime[j] >= N) break;
+            vis[i*prime[j]] = 1;
+            if(i%prime[j]==0) break;
+        }
+    } memset(head, -1, sizeof head); // `链式前向星初始化`
+}
+vector<pair<int, int>> ph[111];      // `用来存储每个数的因数和个数`
+void bridge(int u, int v){           // `对左右奇偶点相同因数建边`
+    int i=0, j=0, iup = ph[u].size(), jup = ph[v].size();
+    while(i <  iup && j < jup) {
+        if(ph[u][i].first == ph[v][j].first) { // `如果有一组因数相同就建一条容量为其个数最小值的边`
+            add(idx[u-1]+1+i+1, idx[v-1]+1+j+1, min(ph[u][i].second, ph[v][j].second));
+            i++;j++;
+        } else if(ph[u][i] > ph[v][j]) j++;
+        else i++;
+    }
+}
+
+int main(){
+    init(); scanf("%d%d", &n, &m);
+    for (int i = 1; i <= n; i++) {
+        scanf("%d", &a[i]);   
+        int tmp = a[i]; sum[i] = 0; // sum[i]`统计因数的总数`
+        for (int j = 0; j < tot && prime[j] <= tmp; j++) {
+            if(tmp%prime[j]==0) {
+                int cc = 0; // `计算prime[j]因数的个数`
+                while(tmp%prime[j]==0) tmp /= prime[j],cc++;
+                ph[i].emplace_back(prime[j], cc);   // `推入向量中`
+                if(i&1)add(idx[i-1]+1, idx[i-1]+1+ph[i].size(), cc); //`奇数点与其因数建边`
+                else add(idx[i-1]+1+ph[i].size(), idx[i-1]+1, cc);   //`偶数因数与其数建边`
+                sum[i] += cc;         // `统计所有因数个数`
+            }
+        } if(tmp>1) {   // `存在大于1e5的因数`
+            sum[i] += 1;
+            ph[i].emplace_back(tmp, 1);
+            if(i&1)add(idx[i-1]+1, idx[i-1]+1+ph[i].size(), 1);
+            else add(idx[i-1]+1+ph[i].size(), idx[i-1]+1, 1);
+        } idx[i] = idx[i-1] + 1 + ph[i].size(); // `记录最后一个点编号`
+    } s = idx[n]+1; t = s+1;                     // `s为源点，t为汇点`
+    for (int i = 1; i <= n; i++) {
+        if(i&1)add(s, idx[i-1]+1, sum[i]);      // `s与奇数点建边`
+        else add(idx[i-1]+1, t, sum[i]);        // `偶数点与t建边，容量为因数个数`
+    } int u, v;
+    for (int i = 1; i <= m; i++) {
+        scanf("%d%d", &u, &v);
+        if(v&1) swap(u, v);
+        bridge(u, v);                          // `对奇偶数建边`
+    } return printf("%d\n", dinic()), 0;       // `输出最大流`
+}
+\end{lstlisting}
+
+
+\subsubsection{费用流}
+
+\begin{lstlisting}
+bool spfa(){ // `spfa寻找是否`
+    memset(d, 0x3f, sizeof d);  // `初始化最大距离`
+    d[s] = inq[s] = 1;  
+    deque<int> q; q.push_back(s);  // `双端队列优化`
+    while(!q.empty()) {
+        int u = q.front(); q.pop_front(); inq[u] = 0; // `出队`
+        for (int i = head[u]; ~i; i = e[i].nxt) {
+            int v = e[i].v;
+            if(e[i].w > 0 && d[v] > d[u] + e[i].c) {
+                d[v] = d[u] + e[i].c; // `更新`
+                if(!inq[v]) {
+                    inq[v] = 1; // `进队标记`
+                    if(!q.empty() && d[v] < d[q.front()]) q.push_front(v);
+                    else q.push_back(v);
+                }
+            }
+        }
+    } return d[t] < inf; // `判断残留网络是否还有可行流`
+}
+
+int dfs(int u, int w){ // `增广`
+    vis[u] = 1;
+    if(u == t) return w; // `到达汇点停止`
+    int dlt = w, x; // `剩余流量`
+    for (int i = head[u]; ~i; i = e[i].nxt) {
+        int v = e[i].v;
+        if(!vis[v] && e[i].w > 0 && d[u]+e[i].c==d[v]) {
+            x = dfs(v, min(dlt, e[i].w)); // `子节点增广`
+            e[i].w -= x; e[i^1].w += x;
+            ans += x * e[i].c; // `计算费用`
+            dlt -= x; if(!dlt) return w;  // `流满了可以直接返回`
+        }
+    } return w - dlt; // `返回这次增广后的流量`
+}
+
+int MCMF(){
+    int sum = 0;
+    while(spfa()) {
+        do{
+            memset(vis, 0, sizeof vis); // `初始化`
+            sum += dfs(s, inf);
+        } while(vis[t]);
+    } return sum; // `返回最大流`
+}
+\end{lstlisting}
+
+{\bfseries 有向环最小权值覆盖}
+
+题意：给出n个点m条单向边边以及经过每条边的费用，让你求出走过一个哈密顿环（除起点外，每个点只能走一次）的最小费用。题目保证至少存在一个环满足条件。 
+
+解法：我们对于每个点都拆成前后两个点，前面的点与源连接，后面的点与汇连接，对于每条有向边u->v, u前面的点连接v后面的点，所有流量都为1。这样建图就是说每个节点都会指向后面一个节点，且不同节点指向后面的节点都不相同。
+
+去重边
+\begin{lstlisting}
+inline bool ad(int u, int v, int w, int c){
+    int i;
+    for (i = head[i]; ~i; i = e[i].nxt) {
+        if(v == e[i].v) break;
+    } if(~i) {
+        if(c < e[i].c) e[i].c = c, e[i^1].c = -c;
+        return 0;
+    }
+    e[cnt].v = v; e[cnt].w = w; e[cnt].c = c;
+    e[cnt].nxt = head[u];
+    head[u] = cnt++; return 1;
+}
+
+inline void add(int u, int v, int w, int c){
+    if(ad(u, v, w, c)) ad(v, u, 0, -c);
+}
+\end{lstlisting}
+
+
+{\bfseries HDU 3435 无向环最小权值覆盖}
+
+对于无向图我们只要建两条边
+\begin{lstlisting}
+#include <bits/stdc++.h>
+const int N = 2e3+9;
+const int M = 6e4+9;
+const int inf = 1e9+7;
+using namespace std;
+
+int n, m, s, t, T, ans,kas;
+int d[N], head[N], cnt;
+bool vis[N], inq[N];
+struct Edge{ int v, nxt, c, w; }e[M];
+
+inline bool ad(int u, int v, int w, int c){
+    int i;
+    for (i = head[u]; ~i; i = e[i].nxt) {
+        if(v == e[i].v) break;
+    } if(~i) {
+        if(c < e[i].c) e[i].c = c, e[i^1].c = -c;
+        return 0;
+    }
+    e[cnt].v = v; e[cnt].w = w; e[cnt].c = c;
+    e[cnt].nxt = head[u];
+    head[u] = cnt++; return 1;
+}
+inline void add(int u, int v, int w, int c){ if(ad(u, v, w, c)) ad(v, u, 0, -c); }
+
+inline bool spfa(){
+    for(int i = 0; i <= t; i++) d[i] = inf;
+    d[s] = inq[s] = 1;
+    deque<int> q; q.push_back(s);
+    while(!q.empty()) {
+        int u = q.front(); q.pop_front(); inq[u] = 0;
+        for (int i = head[u]; ~i; i = e[i].nxt) {
+            int v = e[i].v;
+            if(e[i].w > 0 && d[v] > d[u] + e[i].c) {
+                d[v] = d[u] + e[i].c;
+                if(!inq[v]) {
+                    inq[v] = 1;
+                    if(!q.empty() && d[v] < d[q.front()]) q.push_front(v);
+                    else q.push_back(v);
+                }
+            }
+        }
+    } return d[t] < inf;
+}
+
+int dfs(int u, int w){
+    vis[u] = 1;
+    if(u == t) return w;
+    int dlt = w, x;
+    for (int i = head[u]; ~i; i = e[i].nxt) {
+        int v = e[i].v;
+        if(!vis[v] && e[i].w > 0 && d[u]+e[i].c==d[v]) {
+            x = dfs(v, min(dlt, e[i].w));
+            e[i].w -= x; e[i^1].w += x;
+            ans += x * e[i].c;
+            dlt -= x; if(!dlt) return w;
+        }
+    } return w - dlt;
+}
+
+int MCMF(){ //
+    int sum = 0;
+    while(spfa()) {
+        do{
+            for(int i = 0; i <= t; i++) vis[i] = 0;
+            sum += dfs(s, inf);
+        } while(vis[t]);
+    } return sum;
+}
+
+inline void init(){ //
+    ans = cnt = 0; for (int i = 0; i <= 2*n+2; i++) head[i] = -1; kas ++;
+}
+
+inline int slove(){
+    init(); int u, v, w;
+    for (int i = 0; i < m; i++) {
+        scanf("%d%d%d", &u, &v, &w); 
+        add(u, v+n, 1, w);
+        add(v, u+n, 1, w); // `无向图`
+    } s = 2*n+1; t = s+1;
+    for (int i = 1; i <= n; i++) { 
+        add(i+n, t, 1, 0); // `加边`
+        add(s, i, 1, 0); 
+    } if(MCMF()==n) printf("Case %d: %d\n", kas, ans); // `最大流为n则代表匹配成功`
+    else printf("Case %d: NO\n", kas);
+}
+
+int main(){
+    scanf("%d", &T);
+    while(T--) {
+        scanf("%d%d",&n,&m); slove();
+    } return 0;
+}
+\end{lstlisting}
+
+{\bfseries 最大费用流}
+题意：给你一个N*N的矩阵，每个元素代表该处的权值。要求每个点只能走一次，左上角和右下角可以走两次但该处的权值只能获取一次。问你从左上角走到右下角（只能向下或右移动），再从右下角回到左上角（只能向上或左移动）所能得到的最大权值。
+
+解析：从左上角走到右下角，再从右下角回到左上角所能得到的最大权值，我们可以转化为从【左上角起点】到【右下角终点】走两次所获的最大权值。题目要求起点终点可以走多次，其他定只能走一次。按这种思路的话起点和终点的权值我们多算了一次，最后结果要减去。 
+
+对于最大费用流，我们只要修改一下spfa就行。
+
+\begin{lstlisting}
+#include <bits/stdc++.h>
+const int N = 8e5+9;
+const int M = 1e7+9;
+const int inf = 1e9+7;
+using namespace std;
+
+int n, m, s, t, T, ans;
+int d[N], head[N], cnt;
+bool vis[N], inq[N];
+int mp[602][602];
+/** `MCMF模板` **/
+struct Edge{int v, nxt, c, w;}e[M];
+inline bool ad(int u, int v, int w, int c){
+    e[cnt].v = v; e[cnt].w = w; e[cnt].c = c;
+    e[cnt].nxt = head[u];
+    head[u] = cnt++; return 1;
+}
+
+inline void init(){ans = cnt = 0; memset(head, -1, sizeof head);}
+inline void add(int u, int v, int w, int c){if(ad(u, v, w, c)) ad(v, u, 0, -c);}
+inline bool spfa() {
+    for(int i = 0; i <= t; i++) d[i] = -inf;
+    d[s] = inq[s] = 1;
+    deque<int> q; q.push_back(s);
+    while(!q.empty()) {
+        int u = q.front(); q.pop_front(); inq[u] = 0;
+        for (int i = head[u]; ~i; i = e[i].nxt) {
+            int v = e[i].v;
+            if(e[i].w > 0 && d[v] < d[u] + e[i].c) {
+                d[v] = d[u] + e[i].c;
+                if(!inq[v]) {
+                    inq[v] = 1; q.push_back(v);
+                }
+            }
+        }
+    } return d[t] > -inf;
+}
+
+int dfs(int u, int w) {
+    vis[u] = 1;
+    if(u == t) return w;
+    int dlt = w, x;
+    for (int i = head[u]; ~i; i = e[i].nxt) {
+        int v = e[i].v;
+        if(!vis[v] && e[i].w > 0 && d[u]+e[i].c==d[v]) {
+            x = dfs(v, min(dlt, e[i].w));
+            e[i].w -= x; e[i^1].w += x;
+            ans += x * e[i].c;
+            dlt -= x; if(!dlt) return w;
+        }
+    } return w - dlt;
+}
+
+inline int MCMF(){
+    int sum = 0;
+    while(spfa()) {
+        do{
+            for(int i = 0; i <= t; i++) vis[i] = 0;
+            sum += dfs(s, inf);
+        } while(vis[t]);
+    } return sum;
+}
+/** **/
+inline int slove(){
+    init(); int u, v, w; s = 1; t = 2*n*n;
+    for (int i = 1; i <= n; i++) {
+        for (int j = 1; j <= n; j++) {
+            if(i+j==2 || i+j==2*n) add(n*(i-1)+j, n*(i-1)+j+n*n, 2, mp[i][j]); //`源点汇点流量为2`
+            else add(n*(i-1)+j, n*(i-1)+j+n*n, 1, mp[i][j]);      // `流量为1，即每个点只经过1次`
+            if(i < n) add(n*(i-1)+j+n*n, n*(i)+j, 1, 0);          // `往下走`
+            if(j < n) add(n*(i-1)+j+n*n, n*(i-1)+j+1, 1, 0);      // `往右走`
+        }
+    } MCMF(); printf("%d\n", ans-mp[1][1]-mp[n][n]); // `除去重复计算的值`
+}
+
+inline int read(){
+    char ch; int x;
+    while((ch = getchar())<33);
+    for (x = 0; ch >= '0' && ch <= '9'; ch=getchar())x = x*10+ch-'0'; return x;
+}
+
+int main(){
+    while(~scanf("%d",&n)) {
+        for (int i = 1; i <= n; i++) {
+            for (int j = 1; j <= n; j++)  mp[i][j]=read();  // `快读`
+        } slove();
+    } return 0;
+}
+\end{lstlisting}
+
+费用为流量平方倍
+
+题意：用 1 到 n 运送k 个货物，m条边,每条边表示 运送 x 单元货物的花费为$a*x^2$，c表示最大流量，求最小费用，若不能全部运送输出 -1;(c $<=$ 5)
+
+解析：对于每条边，我们进行拆边。对于一条u->v的边，系数为a，最大流为c, 我们可以拆成c条，每条流量都为1，系数分别为a, 3a, 5a, 7a ... 这样我们选取最小的x条，就能得到$a*x^2$
+
+
+\begin{lstlisting}
+#include <bits/stdc++.h>
+const int N = 120;
+const int M = 5e5+9;
+const int inf = 1e9+7;
+using namespace std;
+// `费用流部分开始`
+int d[N], head[N];
+bool vis[N], inq[N];
+int n, m, k, s, t, cnt, ans;
+struct Edge{int v, w, c, nxt;} e[M];
+inline void ad(int u, int v, int w, int c) {e[cnt] = {v, w, c, head[u]}; head[u] = cnt++;}
+inline void add(int u, int v, int w, int c) {ad(u, v, w, c); ad(v, u, 0, -c);}
+inline void init() { ans = cnt = 0; memset(head, -1, sizeof head);}
+
+bool spfa(){
+    for (int i = 0; i <= t; i++) d[i] = inf;
+    deque<int> q; q.push_back(s); d[s] = inq[s] = 1;
+    while(!q.empty()) {
+        int u = q.front(); q.pop_front(); inq[u] = 0;
+        for (int i = head[u]; ~i; i = e[i].nxt) {
+            int v = e[i].v;
+            if(e[i].w > 0 && d[v] > d[u] + e[i].c) {
+                d[v] = d[u] + e[i].c;
+                if(!inq[v]) {
+                    inq[v] = 1;
+                    if(!q.empty() && d[v] < d[q.front()]) q.push_front(v);
+                    else q.push_back(v);
+                }
+            }
+        }
+    } return d[t] < inf;
+}
+
+int dfs(int u, int w) {
+    vis[u] = 1;
+    if(u == t) return w;
+    int dlt = w, x;
+    for (int i = head[u]; ~i; i = e[i].nxt) {
+        int v = e[i].v;
+        if(!vis[v] && e[i].w > 0 && d[u] + e[i].c == d[v]) {
+            x = dfs(v, min(dlt, e[i].w));
+            e[i].w -= x; e[i^1].w += x;
+            ans += x * e[i].c;
+            dlt -= x; if(!dlt) return w;
+        }
+    } return w - dlt;
+}
+
+inline int MCMF(){
+    int sum = 0;
+    while(spfa()) {
+        do {
+            for (int i = 0; i <= t; i++) vis[i] = 0;
+            sum += dfs(s, k);
+        } while(vis[t]);
+    } return sum;
+}
+// `费用流部分结束`
+int main() {
+    std::ios::sync_with_stdio(0);
+    while(cin>>n>>m>>k){ init();
+        int u, v, w, a; s = 0, t = n; add(s, 1, k, 0); // `为限制节点1流量，另设立源点流向1节点`
+        for (int i = 0; i < m; i++) {
+            cin>>u>>v>>a>>w;
+            for (int i = 1; i <= min(w, k); i++) add(u, v, 1, a*(2*i-1)); // `拆边`
+        } if(MCMF() >= k) cout<<ans<<endl; // `能运送k个`
+        else cout<<"-1"<<endl;
+    } return 0;
+}
+\end{lstlisting}
+
+{\bfseries 混合图欧拉回路}
+
+题意：给你一个有向图，给你一个起点一个终点，需要你删除或者保留边来使得图满足下列要求：
+
+1. 起点的入度 = 出度  - 1
+
+2. 重点的入度 = 出度 + 1
+
+3. 其他点的入度 = 出度
+
+每条边保留或者删除都有一个花费，求使得满足条件最小的花费。
+
+解析：我们另设源点与汇点，对于已给的边的两端节点做一下出度与入读的统计，对于删边花费b>留边花费a时，我们从b连向a一条容量为1费用为b-a的边，反之我们从a连向b一条a-b的边，表示我们先优先选择花费小的方式，但是这种方式并不能保证每个节点入度与出度的要求，我们对于入读数偏多的点建立从源点向该点的边，容量为入读-出度，反之则建从该点到汇点的边，这样跑一次最小费用流，如果跑满了就能让各个节点平衡了，此时的费用加上之前选择的就是最后的答案。
+
+\begin{lstlisting}
+#include <bits/stdc++.h>
+const int N = 200;
+using namespace std;
+/** ------------------------------------ MCMF-START ------------------------------------- **/
+int head[N], d[N], ind[N], oud[N];
+int s, t, n, m, cnt, ans;
+bool vis[N], inq[N];
+
+struct Edge{int v, w, c, nxt;}e[N*N];
+inline init(){cnt=ans=0;memset(head, -1, sizeof head);memset(ind, 0, sizeof ind);memset(oud, 0, sizeof oud);}
+inline void ad(int u, int v, int w, int c){e[cnt] = {v, w, c, head[u]}; head[u] = cnt++;}
+inline void add(int u, int v, int w, int c){ad(u, v, w, c); ad(v, u, 0, -c);}
+
+inline bool spfa(){
+    memset(d, 0x3f, sizeof d);
+    d[s] = inq[s] = 1; deque<int> q; q.push_front(s);
+    while(!q.empty()) {
+        int u = q.front(); q.pop_front(); inq[u] = 0;
+        for (int i = head[u]; ~i; i = e[i].nxt) {
+            int v = e[i].v;
+            if(e[i].w > 0 && d[v] > d[u] + e[i].c) {
+                d[v] = d[u] + e[i].c;
+                if(!inq[v]) {
+                    inq[v] = 1;
+                    if(!q.empty() && d[q.front()] > d[v]) q.push_front(v);
+                    else q.push_back(v);
+                }
+            }
+        }
+    } return d[t] < d[N-1];
+}
+
+int dfs(int u, int w){
+    vis[u] = 1;
+    if(u == t) return w;
+    int dlt=w,x;
+    for (int i = head[u]; ~i; i = e[i].nxt) {
+        int v = e[i].v;
+        if(!vis[v] && e[i].w > 0 && d[v] == d[u] + e[i].c) {
+            x = dfs(v, min(dlt, e[i].w));
+            e[i].w -= x; e[i^1].w += x;
+            ans += e[i].c * x;
+            dlt -= x; if(!dlt) return w;
+        }
+    } return w - dlt;
+}
+
+inline int MCMF(){
+    int sum=0;
+    while(spfa()) {
+        do{
+            memset(vis, 0, sizeof vis);
+            sum += dfs(s, 1);
+        }while(vis[t]);
+    } return sum;
+}
+/** ------------------------------------- MCMF-END -------------------------------------- **/
+int main(){
+    int T; scanf("%d",&T);
+    for (int ks = 1; ks <= T; ks++){ init();
+        scanf("%d%d%d%d", &n, &m, &s, &t); ind[s]++;oud[t]++; // `起始点和终点要满足其条件`
+        int u, v, a, b, l=0; s = n+1, t = s+1;
+        for (int i = 0; i < m; i++) {
+            scanf("%d%d%d%d", &u, &v, &a, &b);
+            ans += min(a, b);                                 // `选择较小的`
+            if(a < b) add(v, u, 1, b-a), ind[v]++, oud[u]++;  // `如果a<b 则建反向的“后悔”边`
+            else add(u, v, 1, a-b);                           // `否则就建 u->v 的边，费用就是删边到留边的差距`
+        } for (int i = 1; i <= n; i++) {
+            l += abs(oud[i] - ind[i]);                        // `统计流入流出的流量总和`
+            if(ind[i] > oud[i]) add(s, i, ind[i] - oud[i], 0);// `流入大于流出，与源点建边`
+            else add(i, t, oud[i] - ind[i], 0);               // `否则与汇点建边`
+        } a = MCMF();
+        if(a == l/2) printf("Case %d: %d\n", ks, ans);        // `流满代表各个节点平衡了`
+        else printf("Case %d: impossible\n", ks);             // `否则就是不成立`
+    } return 0;
+}
+\end{lstlisting}
+
+\subsubsection{上下界网络流}
+
+{\bfseries 无源汇的上下界网络流  SGU - 194}
+
+题目大意：给n个点，及m根管道，每根管道用来流躺液体的，单向的，每时每刻每根管道流入=流出，要使得m条管道组成一个循环流。并满足每根管道流量限制范围为[Li,Ri]. 
+
+
+
+答：进行再构造让每条边的下界为0，对于每根管子上界容量$R_i$和下界容量$L_i$，我们让管子的容量下界变为0，上界为$R_i-L_i$ ，不过这样做就违背了每个节点的流入量=流出量这个原则，所以我们添加额外的源点和汇点与不平衡的节点建边来补全就行了。
+
+
+\begin{lstlisting}
+#include <bits/stdc++.h>
+const int N = 1e4+9;
+const int M = 1e6+9;
+const int inf = 1e9+7;
+using namespace std;
+int n, m, cnt, s, t;
+int head[N], cur[N], d[N], du[N], dn[M];
+/** ---------------------------------`最大流`----------------------------------- **/
+struct Edge{int v, nxt, w;}e[M];
+void ad(int u, int v, int w){e[cnt]={v,head[u],w};head[u] = cnt++;}
+void add(int u, int v, int w){ad(u, v, w); ad(v, u, 0);}
+
+bool bfs(){
+    for(int i = 0; i <= t; i++) d[i] = 0; d[s] = 1;
+    queue<int> q; q.push(s);
+    while(!q.empty()) {
+        int u = q.front(); q.pop();
+        for (int i = head[u]; ~i; i = e[i].nxt) {
+            int v = e[i].v;
+            if(!d[v] && e[i].w > 0) {
+                d[v] = d[u] + 1;
+                q.push(v); if(v == t) return 1;
+            }
+        }
+    } return 0;
+}
+
+int dfs(int u, int w){
+    if(u == t || w == 0) return w;
+    int dlt = w;
+    for (int &i = cur[u]; ~i; i = e[i].nxt) {
+        int v = e[i].v;
+        if(d[v]==d[u]+1 && e[i].w > 0) {
+            int x = dfs(v, min(dlt, e[i].w));
+            e[i].w -= x; e[i^1].w += x;
+            dlt -= x; if(!dlt) return w;
+        }
+    } return w - dlt;
+}
+
+int dinic(){
+    int ans = 0;
+    while(bfs()) {
+        for (int i = 0; i <= t; i++) cur[i] = head[i];
+        ans += dfs(s, inf);
+    } return ans;
+}
+/** ---------------------------------`最大流`----------------------------------- **/
+
+int main(){
+    int u, v, b, c;
+    memset(head, -1, sizeof head); // `链式前向星初始化`
+    scanf("%d%d", &n, &m); s = n+1, t = s+1;
+    for(int i = 1; i <= m; i++) {
+        scanf("%d%d%d%d", &u, &v, &b, &c);
+        add(u, v, c-b);            // `添加u->v的上界为c-b的边`
+        du[u] -= b;du[v] += b;     // `统计每个点的流入流出`
+        dn[i] = b;                 // `记录每条边的流入下界`
+    } for (int i = 1; i <= n; i++) {
+        if(du[i] > 0) add(s, i, du[i]);        // `对于流入大于流出的，s与其建边`
+        else if(du[i] < 0) add(i, t, -du[i]);  // `对于流出大于流入的，其与t建边`
+    } dinic();// printf("%d\n", dinic());
+    for (int i = head[s]; ~i; i = e[i].nxt) {
+        if(e[i].w>0) return puts("NO"), 0;     // `如果有边没有跑满即不存在可行流`
+    } puts("YES");
+    for (int i = 1; i <= m; i++) {
+        printf("%d\n", e[i*2-1].w+dn[i]);      // `输出每条边的流量`
+    } return 0;
+}
+\end{lstlisting}
+
+{\bfseries 有源汇的上下界网络流ZOJ - 3229}
+
+题意：一个男生给m个女神拍照，计划拍照n天，每一天男生最多给C个女神拍照，每天拍照数不能超过D张，而且给每个女神i拍照有数量限制[$L_i，R_i$]，对于每个女神n天的拍照总和至少为$G_i$，如果有解求男生最多能拍多少张照，并求每天给对应女神拍多少张照；不存在可行解输出-1。
+
+解题思路：对于如果不存在下界$L_i$, 那么这幅图就是一个简单的最大流，我们对于源点与n天分别建一条边容量为$D_i$，每天与其对应的c个女生建一条边容量为$R_i$，每个女生与汇点建一条边容量为inf - $G_i$, 然后我们就跑一次最大流就可以了。对于有源汇的最大流，我们将其变为无源汇的网络流只需要将原来的汇点与源点建一条边，这样就是一条循环流。如此按照无源汇的方法再添加附加源与附加汇, 对于附加源与附加汇跑一次最大流来看看是否存在满足下界的可行流，如果满足，我们再跑一次初始源与初始汇的最大流来获得最大流
+
+
+\begin{lstlisting}
+#include<bits/stdc++.h>
+const int N = 2e3+9;
+const int M = 1e6+9;
+const int inf = 1e9+7;
+using namespace std;
+
+int n, m, s, t, cnt, cno;
+int head[N], cur[N], d[N], du[N], dn[M], id[M];
+/** --------------------------------- `最大流` -------------------------- **/
+struct Edge{int v, nxt, w;}e[M];
+void ad(int u, int v, int w){e[cnt]={v,head[u],w};head[u] = cnt++;}
+void add(int u, int v, int w){ad(u, v, w); ad(v, u, 0);}
+
+bool bfs(){
+    for(int i = 0; i <= t; i++) d[i] = 0; d[s] = 1;
+    queue<int> q; q.push(s);
+    while(!q.empty()) {
+        int u = q.front(); q.pop();
+        for(int i = head[u]; ~i; i = e[i].nxt) {
+            int v = e[i].v;
+            if(!d[v] && e[i].w > 0) {
+                d[v] = d[u] + 1;
+                q.push(v); if(v == t) return 1;
+            }
+        }
+    } return 0;
+}
+
+int dfs(int u, int w) {
+    if(u == t || w == 0) return w;
+    int dlt = w;
+    for (int &i = cur[u]; ~i; i = e[i].nxt) {
+        int v = e[i].v;
+        if(d[v] == d[u]+1 && e[i].w > 0){
+            int x = dfs(v, min(dlt, e[i].w));
+            e[i].w -= x; e[i^1].w += x;
+            dlt -= x; if(!dlt) return w;
+        }
+    } return w - dlt;
+}
+
+int dinic(){
+    int ans = 0;
+    while(bfs()){
+        for (int i = 0; i <= t; i++) cur[i] = head[i];
+        ans += dfs(s, inf);
+    } return ans;
+}
+/** ------------------------------------ `最大流` -------------------------- **/
+
+void init(){   // `初始化`
+    memset(head, -1, sizeof head);
+    memset(du, 0, sizeof du);
+    memset(dn, 0, sizeof dn);
+    cnt = cno = 0;
+}
+
+int main(){
+    int flag = 0;
+    while(~scanf("%d%d", &n, &m)) {
+        init(); int C, D, T, L, R, x; flag = 0;
+        for (int i = 1; i <= m; i++) {
+            scanf("%d", &x);
+            du[n+i] -= x; du[n+m+2] += x;   // `统计每个女生节点与初始汇节点的流入流出`
+            add(n+i, n+m+2, inf-x);         // `建议上界-下界的边 = inf - Gi`
+        } for (int i = 1; i <= n; i++) {
+            scanf("%d%d", &C, &D);
+            add(n+m+1, i, D);               // `建立初始源与天数i的边，不存在下界无需统计`
+            for (int j = 0; j < C; j++) {
+                scanf("%d%d%d", &T, &L, &R);T++;
+                add(i, n+T, R-L); dn[cno] = L; id[cno++] = cnt-2; // `记录下界与边数id`
+                du[i] -= L; du[n+T] += L;   // `统计流量`
+            }
+        } for(int i = 1; i <= n+m+2; i++) {
+            if(du[i] > 0) add(n+m+3, i, du[i]);   // `补全每个节点缺少的流量`
+            else if(du[i] < 0) add(i, n+m+4, -du[i]);
+        } s = n+m+3; t = n+m+4; add(n+m+2, n+m+1, inf); // `变无源汇`
+        int ans = dinic(); //printf("%d\n", dinic()); 
+        for (int i = head[s]; ~i; i = e[i].nxt) {
+            if(e[i].w > 0) { flag = 1; puts("-1\n"); break; } // `检测是否所有从附加源出发的边都跑满了`
+        } if(flag) continue;
+        s = n+m+1; t=s+1;
+        printf("%d\n", dinic());      // `跑 初始源与初始汇的 最大流`
+        for (int i = 0; i < cno; i++){
+            printf("%d\n", dn[i]+e[id[i]^1].w);  // `输出每条边流量`
+        } puts("");
+    } return 0;
+}
+\end{lstlisting}
+
+
+{\bfseries 有源汇的上下界最小流 SGU - 176 }
+
+题目：有一个工业加工生产的机器，源为1，汇为n，中间生产环节有货物加工数量限制，输出u v z c， 当c等于1时表示这个加工的环节必须对纽带上的货物全部加工（即上下界都为z），c等于0表示没有下界，求节点1（起点）最少需要投放多少货物才能传送带正常工作。 
+
+解析：如果只是普通的最小流，我们只要跑一次从汇到源的最大流，那么此时我们可以根据残留网络中的边统计出最小流。此题，我们先不考虑最小流，那就是一个源为1，汇为n，的一个上下界网络流，统计每个节点的流入流出就可以判断出是否存在可行解。
+
+\begin{lstlisting}
+#include <bits/stdc++.h>
+const int N = 110;
+const int M = 1.09e4+9;
+const int inf = 1e9+7;
+using namespace std;
+int n, m, cnt, s, t;
+int head[N], cur[N], du[N], dn[M], d[N];
+/** ----------------------------  `最大流`  ---------------------------------------- **/
+struct Edge{int w, nxt, v;}e[M];
+void ad(int u, int v, int w) {e[cnt] = {w, head[u], v};head[u] = cnt++;}
+void add(int u, int v, int w){ad(u, v, w); ad(v, u, 0);}
+
+bool bfs(){
+    for (int i = 0; i <= n+2; i++) d[i]=0; d[s] = 1;
+    queue<int> q; q.push(s);
+    while(!q.empty()) {
+        int u = q.front(); q.pop();
+        for (int i = head[u]; ~i; i = e[i].nxt) {
+            int v = e[i].v;
+            if(!d[v] && e[i].w > 0) {
+                d[v] = d[u] + 1;
+                q.push(v); if(v == t) return 1;
+            }
+        }
+    } return 0;
+}
+
+int dfs(int u, int w){
+    if(u == t || w == 0) return w;
+    int dlt = w;
+    for (int &i = cur[u]; ~i; i = e[i].nxt) {
+        int v = e[i].v;
+        if(d[v] == d[u]+1 && e[i].w > 0) {
+            int x = dfs(v, min(e[i].w, dlt));
+            e[i].w -= x; e[i^1].w += x;
+            dlt -= x; if(!dlt) return w;
+        }
+    } return w - dlt;
+}
+
+int dinic(){
+    int ans = 0;
+    while(bfs()) {
+        for(int i = 0; i <= n+2; i++) cur[i] = head[i];
+        ans += dfs(s, inf);
+    } return ans;
+}
+/** ----------------------------  `最大流`  ---------------------------------------- **/
+
+int main(){
+    scanf("%d%d", &n, &m);
+    memset(head, -1, sizeof head);
+    int u, v, z, c; s = n+1; t = s+1;
+    for (int i = 0; i < m; i++) {
+        scanf("%d%d%d%d", &u, &v, &z, &c);
+        if(c) {
+            add(u, v, 0); dn[i] = z; // `记录边下界`
+            du[u] -= z;  du[v] += z; // `统计流入流出`
+        } else add(u, v, z);         // `只有上界的边`
+    } for (int i = 1; i <= n; i++) {
+        if(du[i] > 0) add(s, i, du[i]); // `附加源建边`
+        else if(du[i] < 0) add(i, t, -du[i]); // `附加汇建边`
+    } int tmp = cnt; add(n, 1, inf); dinic();  // `转无源汇跑最大流`
+    int ans = e[tmp^1].w;                      // `记录可行流中的流量（即n->1的边中的流量）`
+    for (int i = head[s]; ~i; i = e[i].nxt) { 
+        if(e[i].w > 0) return puts("Impossible"), 0;  // `无可行流则结束`
+    } e[tmp].w = 0; e[tmp^1].w = 0;s = n; t = 1; ans -= dinic(); // `去除1-n之间的边并跑一次最小流`
+    if(ans < 0) {                                                // `能去除的流量比可行流还要大`
+        add(n+1, 1, -ans);       // `附加源与源建一条边，容量为差的边`
+        s = n+1; t = n; ans = 0; // `即最小流为0`
+        dinic();                 // `补足可行流`
+    } printf("%d\n", ans);             // `输出去除可以去除的流量后的最小值`
+    for(int i = 0; i < 2*m; i+=2) {
+        printf("%d ", dn[i/2]+e[i^1].w); // `输出每条边的流量`
+    } return 0;
+}
+\end{lstlisting}
+
+

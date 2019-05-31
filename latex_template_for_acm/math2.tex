@@ -1,0 +1,418 @@
+\subsection{常见数列}
+
+\subsubsection{错排}
+
+0,0,1,2,9,44,265
+
+当n个编号元素放在n个编号位置，元素编号与位置编号各不对应的方法数
+
+$$
+D(n) = (n-1)*(D(n-1) + D(n-2))
+$$
+
+
+\subsubsection{卡特兰数}
+
+h0=1,    2, 5, 14, 42, 132, 429, 1430, 4862, 16796, 58786, 208012, 742900, 2674440, 9694845, 35357670
+
+计算公式:
+
+$$
+h_n = \frac{1}{n+1}C_{2n}^{n} = \frac{(2n)!}{(n+1)!n!} ,\\
+h_n = C_{2n}^{n} - C_{2n}^{n-1} ,\\
+h_0 = 1\  \&\& \ h_{n+1} = \frac{2(2n+1)}{n+2} h_{n} ,\\
+h_{n+1} = \sum_{i=0}^nh_{i}h_{n-i}
+$$
+
+
+好看的性质：奇卡特兰数都满足$2^k-1$
+
+1. 括号问题
+
+$P = \prod_{i=1}^n a_i$ 不改变顺序，只用括号表示成对的乘积。问方案数：h(n)
+
+2. 栈问题
+
+给出一个n，问存在多少2n长度的01序列，使得序列任意前缀1的个数不少于0的个数。
+
+本质就是有n个数进栈，求有多少不同的出栈序列方案。
+
+3. 在n × n格点中不越过对角线的单调路径的方案个数 : h(n)
+
+4. n+1个叶子的二叉树的个数：h(n)
+
+5. n+2的凸多边形分为n个三角形的方法个数 h(n)
+
+6. 所有不同构的含n个分枝结点的满二叉树的个数
+
+7. 用n个长方形填充一个高度为n的阶梯状图形的方法个数
+
+\subsubsection{第二类斯特灵数}
+第二类斯特林数：s(p, k)把p元素集合划分到k个不可区分的盒子里且没有空盒子的划分个数。
+
+
+\begin{tabular}{|c|c|}% 通过添加 | 来表示是否需要绘制竖线
+	\hline  % 在表格最上方绘制横线
+	n=0 & 1\\
+	\hline  %在第一行和第二行之间绘制横线
+	n=1 & 0 1\\
+	\hline % 在表格最下方绘制横线
+	n=2& 0 1 1\\
+	\hline
+	n=3& 0 1 3 1\\
+	\hline
+	n=4& 0 1 7 6 1\\
+	\hline
+	n=5& 0 1 15 25 10 1\\
+	\hline
+	n=6& 0 1 31 90 65 15 1\\
+	\hline
+\end{tabular}
+
+通项公式:
+
+$$
+S(p,p) = 1, S(p, 0) = 0(p \ge 1), S(p, k) = k*S(p-1,k)+S(p-1,k-1)(1 \le k \le p-1) 
+$$
+$$
+S(n,m) = \frac{1}{m!}\sum_{k=0}^{m}(-1)^kC(m, k)(m-k)^n 
+$$
+$$
+n^k=\sum_ { i=0}^k S(k,i)×i!×C(n,i)
+$$
+
+n个不同的球，放入m个无区别的盒子，不允许盒子为空：S(n,m)
+
+n个不同的球，放入m个无区别的盒子，允许盒子为空。 $\sum_{k=0}^{m}S(n,k)$
+
+\subsubsection{第一类斯特林数}
+
+第一类Stirling数s(p,k)计数的是把p个对象排成k个非空循环排列的方法数。
+
+\begin{tabular}{|c|c|c|}% 通过添加 | 来表示是否需要绘制竖线
+	\hline  % 在表格最上方绘制横线
+	n=1 & 0 1 & 0 1\\
+	\hline % 在表格最下方绘制横线
+	n=2 & 0 1 1 & 0 -1 1 \\
+	\hline
+	n=3 & 0 2 3 1 & 0 2 -3 1 \\
+	\hline
+	n=4 & 0 6 11 6 1 & 0 -6 11 -6 1 \\
+	\hline
+	n=5 & 0 24 50 35 10 1 & 0 24 -50 35 -10 1 \\
+	\hline
+\end{tabular}
+
+$$
+S(p,p) = 1 (p \ge 0), S(p, 0) = 0(p \ge 1), S(p,k)=(p-1)S(p-1, k)+S(p-1,k-1)\\
+$$
+
+\subsubsection{bell数}
+
+1, 1, 2, 5, 15, 52, 203, 877, 4140, 21147, 115975
+
+Bell数B(p)是将p元素集合分到非空且不可区分盒子的划分个数（没有说分到几个盒子里面）。
+
+$$
+B_n = \sum_{k=1}^nS2(n,k) 
+$$
+$$
+B_{n+1} = \sum_{k=0}^n C(n, k)B_k 
+$$
+
+对于任何质数p， 有 $B_{p+n} \equiv B_n + B_{n+1} (mod p)$
+
+\subsection{奇怪结论}
+
+求(0, 0) $->$ (n+1, m+1) 的两条不相交(可重合)的路径。
+
+\begin{figure}[h] %图	\centering  %插入的图片居中表示
+	\includegraphics[width=0.7\linewidth]{img/math2-1.png}  %插入的图，包括JPG,PNG,PDF,EPS等，放在源文件目录下	
+	\caption{}  %图片的名称	
+	\label{fig:mcmthesis-logo}   %标签，用作引用
+\end{figure}
+	
+
+e(a， b) 表示路径数
+
+将期中一条向右下角平移(1,-1),  变为(0, 0)->(n+1,m+1), (1, -1)->(n+2, m); 
+
+所以该题答案为$(C_{n+m}^n)^2-C_{n+m}^{m-1}·C_{n+m}^{n-1}$
+
+
+\subsection{二项式反演}
+
+
+$$
+f_n = \sum_{i=0}^n (-1)^i {n \choose i} g_i \Leftrightarrow g_n = \sum_{i=0}^n (-1)^i {n \choose i} f_i \\
+f_n = \sum_{i=0}^n {n \choose i} g_i \Leftrightarrow g_n = \sum_{i=0}^n (-1)^{n-i} {n \choose i} f_i
+$$
+
+n个家庭，每个家庭有$a_i$女生，$b_i$个男生,相同家庭的人不能结婚，问有多少种配对方法满足题意；
+
+考虑每个家庭不满足的方案数，至少冲突k个即$C(a_i, k)*C(b_i, k)*k!​$ 种。
+
+这样就有多项式f(x) = x... ； x的系数表示至少的方案数。
+
+由二项式定理可知，第二个式子可以求出恰好冲突0项。
+
+\begin{lstlisting}
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+const ll mod = 998244353;
+const ll g = 3; // `原根`
+const int N = 1e5+9;
+vector<ll> v[N];
+ll x1[N<<1], x2[N<<1], fac[N], inv[N], ans, flag;
+int n, all, cnt, sz;
+inline ll qp(ll a, ll k) { ll ans(1); a %= mod; while(k) { if(k&1) ans = ans * a % mod; k >>= 1; a = a * a % mod; } return ans; }
+inline ll C(ll n, ll m) { return m>n?0:fac[n]*inv[m]%mod*inv[n-m]%mod; }
+struct cmp{ bool operator ()(int a, int b) { return v[a].size() > v[b].size(); } };
+priority_queue<ll, vector<ll>, cmp> q;
+void init() {
+    fac[0] = inv[0] = 1;
+    for (int i = 1; i < N; i++) fac[i] = fac[i-1]*i%mod;
+    inv[N-1] = qp(fac[N-1], mod-2);
+    for (int i = N-2; i; i--) inv[i] = (i+1)*inv[i+1]%mod;
+}
+inline void change(ll y[], int len) {
+    for (int i = 1, j = len/2; i < len-1; i++) {
+        if(i < j) swap(y[i], y[j]);
+        int k = len/2;
+        while(j >= k) { j -= k; k/=2; }
+        if(j < k) j += k;
+    }
+}
+inline void ntt(ll y[], int len, int on) {
+    change(y, len);
+    for (int h = 2; h <= len; h <<= 1) {
+        ll wn = qp(g, (mod-1)/h);
+        if(on == -1) wn = qp(wn, mod-2);
+        for (int j = 0; j < len; j += h) {
+            ll w = 1;
+            for (int k = j; k < j+h/2; k++) {
+                ll u = y[k];
+                ll t = w * y[k+h/2]%mod;
+                y[k] = (u+t)%mod;
+                y[k+h/2]=(u-t+mod)%mod;
+                w = w*wn % mod;
+            }
+        }
+    } if(on == -1) {
+        ll t = qp(len, mod-2);
+        for(int i = 0; i < len; i++) y[i] = y[i]*t%mod;
+    }
+}
+void mul(vector<ll> &a, vector<ll> &b) {
+    int len = 1;
+    int sz1 = a.size(), sz2 = b.size();
+    while(len <= sz1 + sz2 - 1) len <<= 1;
+    for (int i = 0; i < sz1; i++) x1[i] = a[i];
+    for (int i = sz1; i <= len; i++) x1[i] = 0;
+    for (int i = 0; i < sz2; i++) x2[i] = b[i];
+    for (int i = sz2; i <= len; i++) x2[i] = 0;
+    ntt(x1, len, 1); ntt(x2, len, 1);
+    for (int i = 0; i < len; i++) x1[i]*=x2[i];
+    ntt(x1, len, -1); b.resize(sz1+sz2-1);
+    for (int i = 0; i <= sz1+sz2-2; i++) b[i]=x1[i];
+}
+int main() {
+    init(); int T; scanf("%d", &T);
+    while(T--) {
+        scanf("%d", &n); all = 0;
+        while(!q.empty()) q.pop();
+        for (int i = 1; i <= n; i++) {
+            int x, y; scanf("%d%d", &x, &y);
+            v[i].resize(min(x,y)+1);
+            for (int k = 0; k <= min(x, y); k++) {
+                v[i][k] = C(x, k)*C(y, k)%mod*fac[k]%mod;
+            } q.push(i); all += x;
+        } int x(1), y(1);
+        for (int i = 1; i < n; i++) {
+            x = q.top(); q.pop();
+            y = q.top(); q.pop();
+            mul(v[x], v[y]); q.push(y);
+        } ans = 0; flag = 1; sz = (int)v[y].size();
+        for (int i = 0; i < sz; i++) {
+            ans = (ans + flag*fac[all-i]*v[y][i]%mod+mod)%mod;
+            flag = - flag;
+        } printf("%lld\n", ans);
+    } return 0;
+}
+\end{lstlisting}
+
+
+\subsection{ Burnside 引理与polya原理}
+
+设G={a1,a2,…ag}是目标集[1,n]上的置换群。每个置换都写成不相交循环的乘积。 c1(ak)是在置换ak的作用下不动点的个数，也就是长度为1的循环的个数(其实就是被置换ak置换过后位置不变的元素个数)。通过上述置换的变换操作后可以相等的元素属于同一个等价类。若G将[1,n]划分成L个等价类，则： 
+
+
+等价类个数为： $L=\frac{1}{|G|}*\sum_{i=1}^{g}c_1(a_i) $
+
+在一个置换群G={a1,a2,a3……ak}中，设C(ak)是在置换ak的循环节个数，那么用m种颜色染图这n个对象，则不同的染色方案数为： 
+$$
+L = \frac{1}{|G|}\sum_{ai∈G}m^{\lambda(ai)}$$
+
+记$λ_L(ai)$是置换ai中长度为L的循环的数量则 
+ 
+$$
+L = \frac{1}{|G|}\sum_{ai \in G}m^{\lambda_1(ai)+\lambda_2(ai)+...+\lambda_n(ai)}
+$$
+
+
+常见的polya原理题：
+
+n元环手镯， 考虑旋转有n种，如果没有限制就是颜色种类数$m^{gcd(i, n)}$， 存在限制的话，比如说相邻位不能同色，那么dp[i][0]表示与第一位怎么怎么样，矩阵快速幂加速一下就行。
+
+如果需要考虑反转的话，要分奇偶。
+
+n*n方格有8种置换，正方体的12条棱涂色也有24种置换(考虑点线面)
+
+关于爆搜问题，给出一个1*3*3的魔方，有n种颜色
+
+\begin{lstlisting}
+#include <bits/stdc++.h>
+using namespace std;
+#define pb push_back
+#define pi acos(-1)
+typedef long long ll;
+typedef unsigned long long ull;
+const long long mod = 1000000007;
+#define maxn 111111
+#define maxm 11111
+//`三个基础置换`
+//`右边一条棱拧一下`
+int a1[31] = {0,  1,  2, 18,  4,  5, 15,  7,  8, 12, 10,
+                 11,  9, 13, 14,  6, 16, 17,  3, 19, 20,
+                 22, 21, 23, 24, 25, 26, 27, 30, 29, 28};
+//`绕着上面中心旋转90顺时针转动`
+int a2[31] = {0,  7,  4,  1,  8,  5,  2,  9,  6,  3, 16,
+                 13, 10, 17, 14, 11, 18, 15, 12, 28, 29,
+                 30, 25, 26, 27, 19, 20, 21, 22, 23, 24};
+//`前后翻转`
+int a3[31] = {0, 16, 17, 18, 13, 14, 15, 10, 11, 12,  7,
+                  8,  9,  4,  5,  6,  1,  2,  3, 24, 23,
+                 22, 21, 20, 19, 27, 26, 25, 30, 29, 28};
+vector <int> qun[4]; //`将三种置换群放到vector中，方便后面的运算。`
+set<vector<int> > zh;
+set<vector<int> > ::iterator it;
+vector<int> mul(vector<int> a, vector<int> b) {
+    vector<int> ans;
+    for(int i = 0; i <= 30; i++) ans.pb(a[i]);
+    for(int i = 0; i <= 30; i++) ans[i] = b[ans[i]];
+    return ans;
+}
+//`dfs出所有的置换`
+void dfs(vector<int> x) {
+    for(int i = 1; i <= 3; i++) {
+        vector<int> temp = mul(x, qun[i]);
+        if(zh.count(temp) == 0) {
+            zh.insert(temp);
+            dfs(temp);
+        }
+    }
+}
+map<int, int> mp;
+map<int, int> ::iterator it2;
+int vis[31];
+//`找出所有置换的循环节`
+void findcycle() {
+    for(it = zh.begin(); it != zh.end(); it++) {
+        vector<int> temp = *it;
+        memset(vis, 0, sizeof vis);
+        int cnt = 0;
+        for(int i = 1; i <= 30; i++) {
+            if(vis[i] == 0) {
+                cnt++;
+                int tt = i;
+                vis[i] = 1;
+                while(!vis[temp[tt]]) {
+                    tt = temp[tt];
+                    vis[tt] = 1;
+                }
+            }
+        } mp[cnt]++;
+    }
+}
+void init() {
+    for(int i = 1; i <= 3; i++) qun[i].clear();
+    for(int i = 0; i <= 30; i++) qun[1].pb(a1[i]);
+    for(int i = 0; i <= 30; i++) qun[2].pb(a2[i]);
+    for(int i = 0; i <= 30; i++) qun[3].pb(a3[i]);
+    vector<int> temp;
+    for(int i = 0; i <= 30; i++) temp.pb(i);
+    zh.insert(temp);
+    dfs(temp);
+    findcycle();
+}
+
+//`快速乘法`
+long long qmut(long long a, long long b, long long p) {
+    long long ans = 0; long long temp = a;
+    while(b) {
+        if(b & 1LL) ans = (ans + temp) % p;
+        temp = (temp + temp) % p;
+        b /= 2LL;
+    } return ans;
+}
+//`快速幂`
+long long qpow(long long x, long long n, long long p) {
+    long long ans = 1; long long temp = x;
+    while(n) {
+        if(n & 1LL) ans = qmut(ans, temp, p);
+        temp = qmut(temp, temp, p);
+        n>>=1;
+    } return ans;
+}
+
+
+ll qmul(ll x, ll y) {
+    return (x*y - (ll)((long double)x/mod*y)*mod+mod)%mod
+}
+
+long long n, p;
+int main() {
+    init(); int t; scanf("%d", &t);
+    long long sz = zh.size();
+    while(t--) {
+        scanf("%lld%lld", &n, &p);
+        long long ans = 0;
+        for(it2 = mp.begin(); it2 != mp.end(); it2++)
+            ans = (ans + (*it2).second * qpow(n, (*it2).first, p * sz) % (p * sz)) % (p * sz);
+        ans /= sz;
+        printf("%lld\n", ans);
+    }
+    return 0;
+}
+\end{lstlisting}
+
+
+\subsection{常用组合公式}
+
+$$
+\sum_{k=1}^n (2k-1)^2 = \frac{n(4n^2-1)}{3} 
+$$
+$$
+\sum_{k=1}^n k^3 = (\frac{n(n+1)}{2})^2
+$$
+$$
+\sum_{k=1}^n (2k-1)^3 = n^2(2n^2-1)
+$$
+$$
+\sum_{k=1}^n k^4 = \frac{n(n+1)(2n+1)(3n^2+3n-1)}{30}
+$$
+$$
+\sum_{k=1}^n k^5 = \frac{n^2(n+1)^2(2n^2+2n-1)}{12}
+$$
+
+
+$$
+\sum_{i=0}^n iC^i_n = n 2^{n-1}
+$$
+$$
+\sum_{k=0}^n (C_n^k)^2 = C^n_{2n}
+$$
+
+stirling逼近$n! = \sqrt{2\pi n} (\frac{n}{e})^n$
+

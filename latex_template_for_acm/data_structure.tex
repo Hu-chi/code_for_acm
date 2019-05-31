@@ -1,0 +1,341 @@
+\subsection{RMQ}
+
+\begin{lstlisting}
+int mx[maxn][20];
+int f[maxn], num[maxn];
+
+void build(){
+    for(int i = 1; i <= n; i++)
+        mx[i][0] = f[i];
+    for(int j = 1; (1<<j)<= n; j++)
+        for(int i = 1; i + (1<<j)- 1<= n; i++)
+            mx[i][j] = max(mx[i][j-1], mx[i + (1<<(j-1))][j - 1]);
+}
+
+int RMQ(int s, int v){
+    if(s > v)return 0;
+    int k = (int)(log(v - s + 1)/ log(2));
+    return max(mx[s][k], mx[v - (1<<k) + 1][k]);
+}	
+\end{lstlisting}
+
+二维RNQ
+\begin{lstlisting}
+int mp[maxn][maxn];
+int mx[maxn][maxn][10], mi[maxn][maxn][10];
+
+void build(){
+    for (int i = 1; i <= n; i++)
+        for (int j = 1; j <= n; j++)
+            mx[i][j][0] = mi[i][j][0] = mp[i][j];
+    for (int i = 1; i <= n; i++)
+        for (int j = 1; (1<<j)<= n; j++)
+        for (int k = 1; k <= n; k++){
+            mx[i][k][j] = max(mx[i][k][j-1], mx[i][k+(1<<(j-1))][j-1]);
+            mi[i][k][j] = min(mi[i][k][j-1], mi[i][k+(1<<(j-1))][j-1]);
+        }
+}
+
+int query(int x, int y){
+    int k = (int)(log(b)/log(2));
+    int maxx = -inf, minx = inf;
+    for(int i = x; i <= x+b-1; i++){
+        maxx = max(max(mx[i][y][k], mx[i][y - (1<<k) + b][k]), maxx);
+        minx = min(min(mi[i][y][k], mi[i][y - (1<<k) + b][k]), minx);
+    }
+    return maxx - minx;
+}
+\end{lstlisting}
+
+01 RMQ
+
+\begin{lstlisting}
+#include <bits/stdc++.h>
+using namespace std;
+#define PB push_back
+#define ZERO (1e-10)
+#define INF (1<<29)
+#define CL(A,I) (memset(A,I,sizeof(A)))
+#define DEB printf("DEB!\n");
+#define D(X) cout<<"  "<<#X": "<<X<<endl;
+#define EQ(A,B) (A+ZERO>B&&A-ZERO<B)
+typedef long long ll;
+typedef long double ld;
+typedef pair<ll,ll> pll;
+typedef vector<int> vi;
+typedef pair<int,int> ii;
+typedef vector<ii> vii;
+#define IN(n) int n; cin >> n;
+#define FOR(i, m, n) for (int i(m); i < n; i++)
+#define REP(i, n) FOR(i, 0, n)
+#define F(n) REP(i, n)
+#define FF(n) REP(j, n)
+#define FT(m, n) FOR(k, m, n)
+#define aa first
+#define bb second
+void ga(int N,int *A){F(N)scanf("%d",A+i);}
+#define LG (20)
+#define MX (1<<LG)
+#define BT (12) //K =~= log(N)/2
+#define SZ (MX/BT+1)
+#define P2(v) (!(v&(v-1)))
+//structure for RMQ which differs exactly by 1
+struct RMQ{
+    /*
+     * T[b][i][j]: Smallest element on interval i-j, in gradient of shape "b"
+     * G: Precalculate logarithms
+     * B: Bitmask of gradients of each interval of size BT
+     * I: Lowest element on each little interval
+     * E: Value of lowest element on each interval
+     * dp: RMQ: Sparse table
+     */
+    char T[1<<BT][BT][BT],G[MX];
+    short B[SZ];
+    int X,I[SZ],E[SZ],O=-1,dp[SZ][LG];
+    //Precaltucaliton of table T: easy simulation of process for each possible bitmask
+    //Complexity is B^2*2^B
+    void tb(int B){
+        F(1<<B)FF(B+1){
+            int d=0,b=0,I=j;
+            FT(j,B+1){
+                T[i][j][k]=I;
+                d+=i&1<<k?1:-1;
+                if(b>d)b=d,I=k+1;
+            }
+        }
+    }
+    //Makes bitmask of an interval
+    //It is just BT-1 (not BT) since we are interested in differences only
+    int bt(int*A){
+        int b=0;
+        //Check difference and shift it to i-th position
+        F(BT-1)b|=(A[i+1]>A[i])<<i;
+        return b;
+    }
+    //Body of function which calls other functions - setting proper values to arrays
+    void ini(int N,int*A){
+        if(!X++){tb(BT-1);FT(1,MX)G[k]=O+=P2(k);}
+        F(BT*2)A[N+i]=A[N+i-1]+1;
+        F(N/BT+1)E[i]=*min_element(A+i*BT,A+i*BT+BT),I[i]=min_element(A+i*BT,A+i*BT+BT)-A,B[i]=bt(A+i*BT);
+        ST(N/BT+1);
+    }
+    //Function which calculates SPARSE TIBLE (of sizeN/BT)
+    void ST(int N){
+        F(N)dp[i][0]=i;
+        //Precalcute so that there is index to array "E".
+        //Length 2^i: Minimal value from index i to i+2^i-1
+        //Counting intervals from smaller to bigger
+        FT(1,k-(1<<k)+N+1)F(N+1-(1<<k))
+            if(E[dp[i][k-1]]<E[dp[i+(1<<(k-1))][k-1]])
+                dp[i][k]=dp[i][k-1];
+            else dp[i][k]=dp[i+(1<<(k-1))][k-1];
+    }
+    //Returns minimal value on L - R interval
+    //j: logarithm of interval-size
+    //Taking interval from L to L+2^j-1 and from R-2^j+1 to R, and takes
+    //minimum of thos (it will surely cover the whole interval)
+    int QQ(int L,int R,int*A){
+        int j=G[R-L+1];return A[dp[L][j]]<=A[dp[R-(1<<j)+1][j]]?dp[L][j]:dp[R-(1<<j)+1][j];
+    }
+    inline int sc(int a){return a-a%BT;}
+    //Query to interval of size BT
+    //Determines borders of interval
+    void qp(int L,int R,int&b,int&J,int*A){
+        int u=T[B[L/BT]][L%BT][R%BT];
+        if(b>A[sc(L)+u])b=A[J=sc(L)+u];
+    }
+    //Function which solves RMQ on interval
+    //It solves it in multiple steps: it solves it on the BIG interval + it solves the
+    //borders of it
+    //All call are O(1)
+    int qy(int L,int R,int*A){
+        int a,b=INF,J=-1;
+        if(L/BT==R/BT)return qp(L,R,b,J,A),J;
+        if(L%BT)a=L,L=sc(L)+BT,qp(a,L-1,b,J,A);
+        if(R%BT+1!=BT)a=R,R=sc(R)-1,qp(R+1,a,b,J,A);
+        if(L<=R&&E[a=QQ(L/BT,R/BT,E)]<b)b=a,J=I[a];
+        return J;
+    }
+};
+struct LCA{
+    /*
+     * R: RMQ for +/-1
+     * g: Edges
+     * l: Size of E
+     * E: Flattened tree in rder of Euler Tour (with nesting)
+     * L: Depth of node
+     * H: Index of first position of node int 'E'
+     * D: Depth of node. With parallel to 'E'
+     */
+    RMQ R;
+    vi g[MX];
+    int l,E[MX],L[MX],H[MX],D[MX];
+    //dfs for euler tour: Node, Parent, Depth, Indext to E
+    void dfs(int u,int p,int d,int&l){
+        H[u]=l,L[u]=d++,E[l]=u,D[l++]=L[u];
+        for(auto&h:g[u])if(h^p)dfs(h,u,d,l),E[l]=u,D[l++]=L[u];
+    }
+    //Init - nothing interesting (just calls)
+    void pre(int N,int r=0){dfs(r,r,0,l=0),R.ini(l,D);}
+    //Returns LCA: Returns value of E on index given by RMQ
+    int lca(int a,int b){a=H[a],b=H[b];if(a>b)swap(a,b);return E[R.qy(a,b,D)];}
+    //Adds edge
+    void ADD(int A,int B){g[A].PB(B),g[B].PB(A);}
+    //Clears graph
+    void CLR(){for(auto&h:g)h.clear();}
+}L;
+\end{lstlisting}
+
+
+\subsection{线段树}
+
+\begin{lstlisting}
+namespace sgt {
+    long long chg[1000010];
+    int son[1000010][2],cnt,root;
+    void build(int &x,int l,int r) {
+        x=++cnt;
+        if(l==r) return ;
+        int mid=(l+r)>>1;
+        build(son[x][0],l,mid);
+        build(son[x][1],mid+1,r);
+    } void update(int a,int b,int k,int l,int r,long long v) {
+        if(a>b || l>r)return;
+        if(a<=l && b>=r)chg[k]+=v;
+        else {
+            int mid=(l+r)>>1;
+            if(b<=mid)update(a,b,son[k][0],l,mid,v);
+            else if(a>mid)update(a,b,son[k][1],mid+1,r,v);
+            else update(a,mid,son[k][0],l,mid,v),update(mid+1,b,son[k][1],mid+1,r,v);
+        }
+    } long long query(int a,int k,int l,int r,long long v) {
+        if(l==r)return v+chg[k]+val[a];
+        int mid=(l+r)>>1;
+        if(a<=mid)return query(a,son[k][0],l,mid,v+chg[k]);
+        else return query(a,son[k][1],mid+1,r,v+chg[k]);
+    }
+}
+\end{lstlisting}
+
+
+\subsection{LCA}
+垃圾lca
+\begin{lstlisting}
+int lca(int x, int y){
+    if(depth[x] > depth[y]) swap(x, y);
+    while(depth[x] != depth[y]){
+        y = fa[y];
+    } while(x!=y){
+        x = fa[x]; y = fa[y];
+    } return x;
+}
+\end{lstlisting}
+
+倍增LCA
+\begin{lstlisting}
+void dfs(int x){
+    depth[x] = depth[fa[x][0]]+1;
+    for(int i = 0; fa[x][i]; i++) 
+        fa[x][i+1] = fa[fa[x][i]][i];
+    for(int i = head[x]; i != -1; i=edge[i].next){
+        int to = edge[i].to;
+        if(!depth[to]){
+            fa[to][0] = x;
+            dis[to] = dis[x] + edge[i].cost;
+            dfs(to);
+        }
+    }
+}
+
+int Lca(int x, int y){
+    if(depth[x] > depth[y]) swap(x, y);
+    for(int i = 20; i >= 0; i--)
+        if(depth[fa[y][i]] >= depth[x])
+            y = fa[y][i];
+    if(x == y) return y;
+    for(int i = 20; i >= 0; i--){
+        if(fa[y][i] != fa[x][i]){
+            y = fa[y][i];
+            x = fa[x][i];
+        }
+    }
+    return fa[x][0];
+}
+\end{lstlisting}
+
+
+\subsection{树状数组}
+
+{\bfseries 逆序对数}
+
+{\begin{lstlisting}
+#include<bits/stdc++.h>
+#define ll long long
+const int maxn = 5e5+10;
+using namespace std;
+int bit[maxn], n;
+struct Num {
+    int val,pos;
+    bool operator <(const Num &a)const {
+        return val < a.val;
+    }
+}num[maxn];
+
+int lowbit(int x){ return x&(-x); }
+int sum(int i) {
+    int res = 0;
+    while(i > 0) {
+        res += bit[i];
+        i -= lowbit(i);
+    } return res;
+}
+
+void add(int i, int x) {
+    while(i <= n) {
+        bit[i] += x;
+        i += lowbit(i);
+    }
+}
+
+int main(){
+    while(~scanf("%d",&n) && n){
+        memset(bit, 0, sizeof bit);
+        ll ans = 0;
+        for(int i = 0; i < n; i++){
+            scanf("%d",&num[i].val);
+            num[i].pos = i+1;
+        } sort(num, num + n);
+        for(int i = 0; i < n; i++){
+            int tmp = sum(num[i].pos);//`小于他的个数`
+            ans += i - tmp;
+            add(num[i].pos, 1);
+        } printf("%lld\n",ans);
+    } return 0;
+}
+\end{lstlisting}}
+
+二维树状数组
+
+\begin{lstlisting}
+int lb(int x){
+    return x&(-x);
+}
+
+int sum(int x, int y){
+    int res = 0;
+    for(int i = x; i > 0; i -= lb(i))
+        for(int j = y; j > 0; j -= lb(j))
+            res += bit[i][j];
+    return res;
+}
+
+void add(int x, int y, int k){
+    for(int i = x; i < maxn; i += lb(i))
+        for(int j = y; j < maxn; j += lb(j))
+            bit[i][j] += k;
+}
+\end{lstlisting}
+
+
+
+

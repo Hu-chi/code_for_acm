@@ -1,0 +1,591 @@
+\subsection{Hash}
+
+
+有时候我们要统计很大的数的个数时，但是这个时候我们又开不下这么大的数组，我们常常可以借助map，或者$hash_table$之类的工具。
+
+Hash 统计数字个数
+
+有时候map占用的数据也非常大， 我们可以利用链式前向星来代替链表实现一个简易的hash来统计每个数的个数，这个所占用的空间比map要小的多。
+
+\subsubsection{统计个数}
+
+\begin{lstlisting}
+const int mod=1<<15;
+struct Edge{int v,nxt,w;}e[mod];
+int head[mod], cnt;
+void init(){ memset(head, -1, sizeof head); cnt = 0; }
+
+int gethash(int x){ // `将数字hash`
+    return (x+ mod) & (mod-1);
+}
+
+void insert(int x) { // `插入`
+    int id=gethash(x); // `得到hash值`
+    for(int i=head[id]; i != -1;i=e[i].nxt) { // `便利冲突的元素`
+        if(e[i].v==x) { e[i].w++; return; }
+    } e[cnt] = {x, head[id], 1}; head[id]=cnt++; // `新元素额外添加`
+}
+
+void search(int x) { // `查找个数`
+    int id=gethash(x);
+    for(int i=head[id] ; i!=-1;i=e[i].nxt) {
+        if(e[i].v==x) return e[i].w;
+    } return 0;
+}
+\end{lstlisting}
+
+\subsection{统计字符串}
+
+如果我们就考虑小写字母的话，那么有26种小写字母，那么对于1e6长度的字符串，就有$10^{1414973}$多种情况，而对于我们所要处理的字符串实在是太少，所以我们对于字符串hash很少来处理冲突，如果发现确实有冲突，那么我们可以采用使用两种不同的hash来降低同时冲突的概率。
+
+一般我们对于字符串是如此hash的：
+
+比如有一个字符串abc
+
+我们构造一个函数：$f(x) = a[0]*x^{n-1} + a[1]*x^{n-2} + ... + a[n-1]$
+
+x就是我们自己选取的数，一般常用一个质数，比如131，233之类的也用字母种类数比如26之类的。
+
+那么对于上面这个字符串$f(26) = a*x^{2} + b*x^{2} + c$
+
+a,b,c的值可以是1,2,3或者是他们本身的ASCII值。
+
+使用这种方式的好处就是一次O(n)的预处理后可以O(1)查询任意字串的值，除此之外还有滚动哈希之类的操作.
+
+\subsection{子串种类}
+
+题意: 给定一个字符串s, 查询长度为m的子串一共有多少种.
+
+{\bfseries 滚动hash}
+
+滚动hash其实就是我们先计算第一个长度为m的字符串的hash值,我们去计算第二个长度为m的子串时,我们只需要使用上一个hash值减去其第一个字母的影响然后乘x再加上后面缺少的那个字母的值.  举例如下
+
+$f(x) = a[0]*x^{n-1} + a[1]*x^{n-2} + ... + a[n-1] $ , 我们先减去 $a[0] * x^{n-1} $ 然后整体乘x , 最后加上a[n].
+
+\begin{lstlisting}
+#include <cstdio>
+#include <cstring>
+const int N = 1.6e7+9;
+using namespace std;
+char s[N];
+bool has[N], vis[256];
+int n, nc, a[256], m, cnt;
+
+int main(){
+    scanf("%d%*d%s",&m,s); n = strlen(s);
+    for (int i = 0; i < n; i++) {
+        if(!vis[s[i]]) {
+            vis[s[i]] = 1; a[s[i]]=nc++; // `对于字母出现的顺序来决定大小`
+        }
+    } int ans = 0, x = 0, y = 1;
+    for (int i = 0; i < m; i ++) {
+        x = x*nc + a[s[i]];         // `计算第一个长度为m的字符串的hash值`
+        y *= nc;
+    } y/= nc; has[x] = 1; ans ++; // y = nc^{m-1}
+    for (int i = 1; i <= n-m; i++) {
+        x = (x - a[s[i-1]]*y) * nc + a[s[i+m-1]]; // `滚动hash`
+        if(!has[x]) has[x] = 1, ans++;
+    } return printf("%d\n", ans), 0;
+}
+\end{lstlisting}
+
+{\bfseries O(n)预处理后整体查询}
+
+由于map的速度实在是太慢了,而且占用空间也大,我们使用之前自己写的.
+
+这里我们o(n)预处理的h(i) 代表的是 以i为结尾的 字串的hash值. bit则存放的是$x^i$, 那么我们想要得到一个字串(l,r)的值的话我们对于0-r的字串的值减去前0-(l-1) 的字串的影响就行了.
+
+\begin{lstlisting}
+#include <cstdio>
+#include <map>
+#include <cstring>
+#define ull unsigned long long
+const int base = 1e9+9;
+const int N = 2e6+9;
+using namespace std;
+int n, m;
+ull bit[N], h[N];
+char s[N];
+
+const int mod=1<<15;
+struct Edge{int v,nxt,w;}e[mod];
+int head[mod], cnt;
+void init(){memset(head, -1, sizeof head); cnt = 0;}
+int gethash(int x){return (x+ mod) & (mod-1);}
+void insert(int x) {
+    int id=gethash(x); 
+    for(int i=head[id]; i != -1;i=e[i].nxt) {
+        if(e[i].v==x) { e[i].w++; return;}
+    } e[cnt].v = x; e[cnt].nxt = head[id]; e[cnt].w = 1; head[id]=cnt++;
+}
+
+int main(){
+    memset(head, -1, sizeof head);    // `初始化`
+    scanf("%d%*d%s", &m, s+1); bit[0] = 1; n = strlen(s+1);
+    for (int i = 1; i < N; i++) bit[i] = bit[i-1]*base;      // x^i
+    for (int i = 1; i <= n; i++) h[i] = h[i-1]*base + s[i];  // `以i为结尾的 字串的hash值`
+    for (int i = m; i <= n; i++) {
+        ull tmp = (h[i] - h[i-m]*bit[m]);                    // `i-m+1, i 字串的hash值`
+        insert(tmp);
+    } printf("%d\n", cnt);
+    return 0;
+}
+\end{lstlisting}
+
+{\bfseries 二维字符矩阵}
+
+题意: 给出一个n * m的矩阵。让你从中发现一个最大的正方形。使得这样子的正方形在矩阵中出现了至少两次。输出最大正方形的边长。  
+
+$$
+f(x, y ) = a[0][0] * x^{m-1} * y^{n-1} + a[0][1] * x^{m-2}*y^{n-1} + ... + a[0][m-1]*y^{n-1} \\
+\  \ \ \ \ \ \ \ \ \ \ \ + a[1][0] * x^{m-1} * y^{n-2} + a[1][1] * x^{m-2}*y^{n-2} + ... + a[1][m-1]*y^{n-2} \\
++ ...   \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \
+\\   + a[n-1][0] * x^{m-1} + a[n-1][1] * x^{m-2} + ... + a[n-1][m-1]
+$$
+
+这样下来我们如果要计算一个左上角(l1, r1) ,右下角为(l2, r2)的字符矩阵的hash值就方便的多了.
+
+如果x边长的正方形矩阵满足题意,那么1- (x-1)边长的正方形矩阵都满足,所以具有二分性质,我们可以使用二分来枚举边长
+
+\begin{lstlisting}
+#include <bits/stdc++.h>
+
+using namespace std;
+using ull = unsigned long long;
+const int N = 555;
+const int mod = 1e5+7;
+struct Edge { ull v; int nxt; }e[N*N];
+int head[mod];
+ull base1 = 1313, base2 =13131;
+ull has1[N][N], has2[N][N], bit1[N], bit2[N];
+char s[N][N];
+int n, m, cnt;
+
+void init(){    // `初始化`
+    bit1[0] = bit2[0] = 1; cnt = 0;
+    for (int i = 1; i < N; i++) {
+        bit1[i] = bit1[i-1]*base1;
+        bit2[i] = bit2[i-1]*base2;
+    } for (int i = 1; i <= n; i++) {
+        for (int j = 1; j <= m; j++) {
+            has1[i][j] = has1[i][j-1]*base1+s[i][j]; // `计算的是i行的以j为末尾的字符串的hash值`
+            has2[i][j] = has2[i-1][j]*base2+has1[i][j]; // `计算$1-i$, $1-j$ 的矩阵的hash值`
+        }
+    }
+}
+
+void inser(int u, ull v){ e[cnt].v = v; e[cnt].nxt = head[u]; head[u] = cnt++;}
+
+ull cal(int i, int j, int x){  // `计算 (i,j) (i+x-1, j+x-1) 矩阵的hash值`
+    ull ret = has2[i+x-1][j+x-1];    
+    ret -= has2[i+x-1][j-1] * bit1[x] + has2[i-1][j+x-1]*bit2[x];
+    ret += has2[i-1][j-1] * bit1[x] * bit2[x];
+    return ret;
+}
+
+bool sech(ull x){
+    int t = x % mod;
+    for (int i = head[t]; ~i; i = e[i].nxt) {
+        if(e[i].v == x) return 1;
+    } return 0;
+}
+
+bool check(int x){  // `判断是否存在满足题意的 x长度的边长的矩阵`
+    cnt = 0; memset(head, -1, sizeof head); // `清空hash表种的元素`
+    for (int i = 1; i+x-1 <= n; i++) {
+        for (int j = 1; j+x-1 <= m; j++) {
+            ull t = cal(i, j, x); // `每次计算一个矩阵`
+            if(sech(t)) return 1; // `查询是否有同样的矩阵`
+            inser(t%mod, t);      // `没有就将矩阵的hash值插入`
+        }
+    } return 0;
+}
+
+int main() {
+    scanf("%d%d", &n, &m);  
+    for (int i = 1; i <= n; i++) {
+        scanf("%s", s[i]+1);
+    } init(); int l = 1, r = min(m, n); 
+    while(l <= r){      // `二分边长`
+        int mid = (l+r)>>1;
+        if(check(mid)) l = mid + 1;
+        else r = mid - 1;
+    } return printf("%d\n", l-1), 0;
+}
+\end{lstlisting}
+
+{\bfseries 最小表示法}
+
+求字符串的循环表示法：
+
+我们有一个字符串s,我们可以不停的把头上的字母放在尾巴上这样就构成一个循环串s[k],s[k+1],s[k+2],..,s[n],s[1],..,s[k-1]; 我们可以得到n个循环串，我们要去寻找字典序最小的串的首字母的原始下标。
+
+我们可以使用双指针法，可以做到O(n)， 也可以利用hash和二分算法不过这个复杂度是O(nlogn)的；
+
+\begin{lstlisting}
+int getMi(){
+    int i = 0, j = 1, l; // `i,j 就是需要比较的两个循环串的首字母下标，l是长度`
+    while(i < n && j < n){
+        for(l = 0; l < n; l++){
+            if(s[(i+l)%n] != s[(j+l)%n]) break;  // `找到第一个不相等的。`
+        } if(l >= n) break; // `没找到说明两个循环串相等`
+        if(s[(i+l)%n] < s[(j+l)%n]) j += l+1; // `如果i串更小，那么j移动l+1位,这里改成>就是字典序最大`
+        else i += l+1;                        // `否则i串移动l+1位`
+        if(i==j) j++;    // `如果i==j了让j往后移动一格`
+    } return i<j?i:j;   // `返回下标小的(此时要么有一个>n或者i,j串相等)`
+}
+\end{lstlisting}
+
+{\bfseries 二分+ Hash}
+
+hash的做法是n个字符串我们从第一个开始比较，始终维护最小的循环串，比较字符串是log(n)比较的，方法是二分到两个字符串第一个不同的位置。所以总体复杂度是O(nlogn)
+
+\begin{lstlisting}
+#include <bits/stdc++.h>
+using namespace std;
+using ull = unsigned long long;
+const int N = 1e5+9;
+const int base = 131;
+int n;
+char s[N];
+ull bit[N], has[N];
+
+bool check(int x, int y, int l){ // `判断x,y开始l长度的字符串是否相等`
+    ull u = has[x+l-1] - has[x-1]*bit[l];
+    ull v = has[y+l-1] - has[y-1]*bit[l];
+    return u == v;
+}
+
+bool ok(int x, int y){ // `比较那个下标开始的串更小`
+    int l = 0, r = n;
+    while(l <= r) {
+        int mid = (l+r) >> 1;
+        if(check(x, y, mid)) l = mid + 1;
+        else r = mid - 1;
+    } if(l-1==n) return 0;
+    return (s[x+l-1]) < (s[y+l-1]);
+}
+
+int main() {
+    scanf("%s", s+1); bit[0] = 1; n = strlen(s+1);
+    for (int i = 1; i <= n; i++) s[i+n] = s[i];
+    for (int i = 1; i < N; i++) bit[i] = bit[i-1]*base;
+    for (int i = 1; i <= n*2; i++) has[i] = has[i-1]*base + s[i];
+    int x = 1;
+    for (int i = 2; i <= n; i++) {
+        if(ok(i, x)) x = i;
+    } return printf("%d\n", x), 0;
+}
+\end{lstlisting}
+
+
+\subsection{Trie树}
+
+01 字典树
+
+\begin{lstlisting}
+namespace trie{
+    const int NODE = 2e6 * 2;
+    int ch[NODE][2], size[NODE], pool = 2;
+    // int vis[NODE], vid = 1;
+
+    inline void init(){
+        memset(ch, 0, sizeof ch);
+        memset(size, 0, sizeof size);
+    }
+
+    inline void ins(bs a, bool flag) {
+        int u = 1;
+        for (int i = 31; i >= 0; i--) {
+            if (!ch[u][a[i]]) ch[u][a[i]] = pool++;
+            u = ch[u][a[i]];
+            if (flag) size[u] ++;
+            else size[u] --;
+        }
+    }
+
+    inline ll find(bs a) {
+        int u = 1; ll ans = 0;
+        for (int i = 31; i >= 0; i--) {
+            if (ch[u][1-a[i]] && size[ch[u][1-a[i]]]) {
+                ans |= (1LL << i );
+                u = ch[u][1-a[i]];
+            } else {
+                u = ch[u][a[i]];
+            }
+        } return ans;
+    }
+};
+\end{lstlisting}
+
+可持久化字典树，区间查询
+
+
+\begin{lstlisting}
+#define bs bitset<32>
+const int N = 6e5+9;
+namespace trie{
+    int ch[N<<5][2], root[N], size[N<<5], pool = 1;
+    bs tmp;
+
+    inline void ins(int &nw, int od, int idx=24) {
+        nw = pool++;
+        for (int i = 0; i < 2; i++) ch[nw][i] = ch[od][i];
+        size[nw] = size[od] + 1;
+        if(!idx) return ;
+        int x = tmp[idx-1];
+        ins(ch[nw][x], ch[od][x], idx-1);
+    }
+
+    inline int query(int l, int r, int idx=24) {
+        if(!idx) return 0;
+        int x = tmp[idx-1];
+        if(size[ch[r][x]] > size[ch[l][x]])
+            return query(ch[l][x], ch[r][x], idx-1) + (1<<(idx-1));
+        return query(ch[l][1-x], ch[r][1-x], idx-1);
+    }
+};
+\end{lstlisting}
+
+
+带延迟操作的01字典树合并-csl
+
+\begin{lstlisting}
+#include <bits/stdc++.h>
+using namespace std;
+
+const int maxn = 2e7;
+struct Node {
+    int sz, tag;
+    Node* ch[2];
+    Node() : sz(0), tag(0) { memset(ch, 0, sizeof(ch)); }
+    void maintain() {
+        sz = 0;
+        if (ch[0] != nullptr) sz += ch[0]->sz;
+        if (ch[1] != nullptr) sz += ch[1]->sz;
+    }
+    void pushdown() {
+        if (tag == 0) return;
+        if (tag & 1) {
+            swap(ch[0], ch[1]);
+            if (ch[0] != nullptr) ch[0]->tag++;
+        }
+        if (tag > 1) {
+            if (ch[0] != nullptr) ch[0]->tag += (tag >> 1);
+            if (ch[1] != nullptr) ch[1]->tag += (tag >> 1);
+        } tag = 0;
+    }
+} mem[maxn];
+
+Node* newNode() {
+    static int tot = 0;
+    assert(tot + 1 < maxn);
+    return &mem[tot++];
+};
+
+struct Trie {
+    void insert(Node*& o, int x, int dep = 30) {
+        if (o == nullptr) o = newNode();
+        if (dep == 0) {
+            o->sz++;
+            return;
+        }
+        o->pushdown();
+        insert(o->ch[x & 1], x >> 1, dep - 1);
+        o->maintain();
+    }
+    Node* merge(Node* o, Node* k, int dep = 30) {
+        if (o == nullptr) return k;
+        if (k == nullptr) return o;
+        if (o == nullptr && k == nullptr) return nullptr;
+        if (dep == 0) {
+            o->sz += k->sz;
+            return o;
+        }
+        o->pushdown(), k->pushdown();
+        o->ch[0] = merge(o->ch[0], k->ch[0], dep - 1);
+        o->ch[1] = merge(o->ch[1], k->ch[1], dep - 1);
+        o->maintain();
+        return o;
+    }
+    int query(Node* o, int x, int dep) {
+        if (o == nullptr) return 0;
+        if (dep == 0) return o->sz;
+        o->pushdown();
+        return query(o->ch[x & 1], x >> 1, dep - 1);
+    }
+};
+
+struct DSU {
+    vector<int> fa;
+    DSU() {}
+    DSU(int n) { fa.resize(n), iota(fa.begin(), fa.end(), 0); }
+    int find(int x) { return fa[x] == x ? x : fa[x] = find(fa[x]); }
+    bool same(int x, int y) { return find(x) == find(y); }
+    void merge(int x, int y) { fa[find(y)] = find(x); }
+};
+
+int main() {
+    int n, m;
+    scanf("%d%d", &n, &m);
+    DSU d(n);
+    Trie t;
+    vector<Node*> rt(n);
+    for (int i = 0, x; i < n; i++) {
+        scanf("%d", &x);
+        t.insert(rt[i], x);
+    }
+    while (m--) {
+        static int op, u, v, k, x;
+        scanf("%d", &op);
+        if (op == 1) {
+            scanf("%d%d", &u, &v);
+            --u, --v;
+            if (!d.same(u, v)) {
+                rt[d.find(u)] = t.merge(rt[d.find(u)], rt[d.find(v)]);
+                d.merge(u, v);
+            }
+        } else if (op == 2) {
+            scanf("%d", &u); --u;
+            rt[d.find(u)]->tag++;
+        } else {
+            scanf("%d%d%d", &u, &k, &x); --u;
+            printf("%d\n", t.query(rt[d.find(u)], x, k));
+        }
+    } return 0;
+}
+\end{lstlisting}
+
+\subsection{KMP}
+
+\begin{lstlisting}
+void getNxt(){
+    int i = 0, j = -1;
+    nxt[i] = -1;
+    while(i<m){
+        if(j==-1||p[i]==p[j]){
+            i++; j++; nxt[i] = j;
+        }else j = nxt[j];
+    }
+}
+\end{lstlisting}
+
+
+\subsection{马拉车}
+\begin{lstlisting}
+char s[maxn];
+int p[maxn];
+int Manacher(){
+    int len = strlen(s),id=0,r=0;
+    for(int i = len; i >= 0; i--){
+        s[i*2+2] = s[i];
+        s[i*2+1] = '#';
+    }
+    s[0] = '#';
+    for(int i = 2; i < 2*len + 1; i++){
+        if(p[id] + id>i)p[i] = min(p[2*id - i], p[id]+id-i);
+        else p[i] = 1;
+        while(s[i-p[i]] == s[i+p[i]]) ++ p[i];
+        if(id + p[id] < i + p[i])id = i;
+        if(r < p[i]) r = p[i];
+    }
+    return r - 1;
+}
+\end{lstlisting}
+
+\subsection{AC自动机}
+
+题意：第一行输入测试数据的组数，然后输入一个整数n，接下来的n行每行输入一个单词，最后输入一个字符串，问在这个字符串中有多少个单词出现过。
+
+\begin{lstlisting}
+#include <bits/stdc++.h>
+using namespace std;
+const int maxn = 1e6;
+const int maxk = 26;
+struct Node{
+    int nxt[26];
+    int fail;
+    int cnt;
+    void init(){
+        memset(nxt, -1, sizeof nxt);
+        fail = -1;
+        cnt = 0;
+    }
+} trie[maxn];
+int root, num;
+int que[maxn], head, tail;
+char w[60], str[maxn];
+
+void init(){ root=num=0; trie[root].init(); }
+
+inline void inser(char *s){
+    int idx, p = root;
+    while(*s){
+        idx = *s - 'a';
+        if(trie[p].nxt[idx]==-1){
+            trie[++num].init();
+            trie[p].nxt[idx] = num;
+        }
+        p = trie[p].nxt[idx];
+        s ++;
+    }
+    trie[p].cnt++;
+}
+
+void AC(){
+    int cur,p,son;
+    head = tail = 0;
+    que[tail++] = root;
+    while(head < tail){
+        cur = que[head++];
+        for(int i = 0; i < maxk; i++){
+            if(trie[cur].nxt[i]!=-1){
+                son = trie[cur].nxt[i];
+                p = trie[cur].fail;
+                if(cur == root) trie[son].fail = root;
+                else trie[son].fail = trie[p].nxt[i];
+                que[tail++] = son;
+            } else {
+                p = trie[cur].fail;
+                if(cur == root){
+                    trie[cur].nxt[i] = root;
+                }
+                else trie[cur].nxt[i] = trie[p].nxt[i];
+            }
+        }
+    }
+}
+
+int Find(char *s){
+    int p = root, cnt = 0, idx, tmp;
+    while(*s){
+        idx = *s - 'a';
+        p = trie[p].nxt[idx];
+        if(p==-1) p = root;
+        tmp = p;
+        while(tmp != root && trie[tmp].cnt != -1){
+            cnt += trie[tmp].cnt;
+            trie[tmp].cnt = -1;
+            tmp = trie[tmp].fail;
+        }
+        s ++;
+    }
+    return cnt;
+}
+int n;
+int main(){
+    int t;scanf("%d",&t);
+    while(t--){
+        scanf("%d",&n);
+        init();
+        getchar();
+        for(int i = 0; i < n; i++){
+            gets(w);
+            inser(w);
+        }
+        AC();
+        gets(str);
+        printf("%d\n",Find(str));
+    }
+}
+\end{lstlisting}

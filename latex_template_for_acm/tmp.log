@@ -1,0 +1,13 @@
+This is TeX, Version 3.14159265 (MiKTeX 2.9) (preloaded format=tex 2018.10.7)  7 OCT 2018 21:27
+**./tmp.tex
+(tmp.tex
+! Undefined control sequence.
+l.1 \documentclass
+                  [12pt, letterpaper]{article}
+? 
+! Emergency stop.
+l.1 \documentclass
+                  [12pt, letterpaper]{article}
+End of file on the terminal!
+
+No pages of output.

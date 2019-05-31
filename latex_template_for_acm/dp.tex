@@ -1,0 +1,903 @@
+\subsection{背包问题}
+
+\subsubsection{01背包}
+
+{\bfseries hdu 2955 01背包}
+
+要求在不被抓的概率下偷到更多的东西,概率p是double不能作为背包的空间,考虑m因为n*m<100000.所以只要找最大的可以满足ans[i]>1-p的i;
+
+\begin{lstlisting}
+#include<iostream>
+#include<cstdio>
+#include<cstring>
+#include<cmath>
+using namespace std;
+
+int main(){
+    int t;scanf("%d",&t);
+    double p1;int n;
+    double ans[111111],p[111];
+    int m[111];
+    while(t--){
+        scanf("%lf%d",&p1,&n);
+        memset(ans, 0, sizeof ans);
+        ans[0]=1;
+        int sum = 0;
+        //cout << n << endl;
+        for(int i = 0; i < n; i++){
+            scanf("%d%lf",&m[i],&p[i]);
+            sum += m[i];
+            p[i] = 1 - p[i];
+        }
+        for(int i = 0; i < n; i++){
+            for(int j = sum; j >= 0; j--){
+                ans[j] = max(ans[j], ans[j-m[i]]*p[i]);
+            }
+        }
+        int maxn = 0;
+        for(int i = sum; i >= 0; i--){
+            if(ans[i]>1-p1){
+                maxn = i;break;
+            }
+        }
+        printf("%d\n",maxn);
+    }
+    return 0;
+}
+\end{lstlisting}
+
+普通dp,https://vjudge.net/problem/HDU-1864,虽然有点像01背包,但是写的时候只要考虑每增加一种物品与前面的最优解的关系dp[i] = max(dp[j]+sum[i], dp[i]),
+
+\begin{lstlisting}
+#include<cstdio>
+#include<iostream>
+#include<cstring>
+#include<cmath>
+#include<algorithm>
+using namespace std;
+
+double bag[300];
+
+double max(double a, double b){
+    if(a>b)return a;
+    return b;
+}
+
+int main(){
+    double edge;int n;
+    while(~scanf("%lf%d",&edge,&n) && n){
+        memset(bag, 0 , sizeof bag);
+        int k;
+        double sum[1000],summ=0; int tot=0;
+        for(int i = 0; i < n; i++){
+            bool flag = 0;
+            summ=0;
+            scanf("%d",&k);
+            char a;double money;
+            double cal[30]={0};
+            for(int j = 0; j < k; j++){
+                scanf(" %c:%lf",&a,&money);
+                summ+=money;
+                if(money>600)flag = 1;
+                cal[a-'A']+=money;
+                if(!flag){
+                    for(int i = 0; i < 3; i++)
+                        if(cal[i]>600)flag = 1;
+                    if(a!='A' && a!='B' && a!='C')flag=1;
+                    if(summ>1000)flag=1;
+                }
+            } if(!flag)sum[++tot]=summ;
+        } for(int i = 1; i <= tot; ++i){
+            for(int j = 0; j <= i; j++){
+                if(bag[j] + sum[i] <= edge){
+                    bag[i] = max(bag[i], bag[j]+sum[i]);
+                }
+            }
+        } double maxn = 0;
+        for(int i = 0; i <= tot; i++){
+            maxn = max(maxn, bag[i]);
+        } printf("%.2lf\n",maxn);
+    } return 0;
+}
+\end{lstlisting}
+
+
+
+\subsubsection{完全背包}
+
+这里的怪物是无限的,但是存在最多杀多少个怪的限制.构造dp[k][s],代表杀s个怪物消耗k耐久度.
+
+所以有dp[j][t+1] = max(dp[j][t+1] ,  dp[j-耐久度][t]+经验值 )
+
+在这里,便利杀怪和便利杀第几怪是没有关联的,也就是说他们的顺序是可以交换的
+
+
+
+\begin{lstlisting}
+#include<cstdio>
+#include<iostream>
+#include<cstring>
+using namespace std;
+
+int n,m,k,s;
+int thing[111][2];
+int dp[111][111];
+int main(){
+    while(~scanf("%d%d%d%d",&n,&m,&k,&s)){
+        for(int i = 0; i < k; i++){
+            scanf("%d%d",&thing[i][0],&thing[i][1]);
+        } memset(dp, 0 ,sizeof dp);
+        for(int i = 0; i < k; i++) {
+            for(int j = thing[i][1]; j <= m; j++) {
+                for(int t = 0; t < s; t++) 
+                    dp[j][t+1] = max(dp[j-thing[i][1]][t]+thing[i][0],dp[j][t+1]);
+            }
+        }
+        int ans = -1;
+        bool flag = 0;
+        for(int i = 0; i <= m; i++){
+            for(int j = 0; j <= s; j++){
+                if(dp[i][j]>=n){
+                    ans = m-i; flag = 1; break;
+                }
+            } if(flag)break;
+        } printf("%d\n",ans);
+    } return 0;
+}
+\end{lstlisting}
+
+
+\subsubsection{多重背包}
+
+\begin{lstlisting}
+procedure MultiplePack(cost,weight,amount)
+    if cost*amount>=V
+        CompletePack(cost,weight)
+        return
+    integer k=1
+    while k<amount
+        ZeroOnePack(k*cost,k*weight)
+        amount=amount-k
+        k=k*2
+    ZeroOnePack(amount*cost,amount*weight)
+\end{lstlisting}
+
+
+{\bfseries 例题}
+
+\begin{lstlisting}
+#include<cstdio>
+#include<algorithm>
+#include<iostream>
+#include<cstring>
+using namespace std;
+
+int a[111],c[111],dp[111111];
+int n,m;
+
+void CompletePack(int v){
+    for(int i = v; i <= m; i++)
+        dp[i]=max(dp[i],dp[i-v]+v);
+}
+
+void ZeroOnePack(int v){
+    for(int i = m; i>=v; i--){
+        dp[i]=max(dp[i],dp[i-v]+v);
+    }
+}
+
+//`多重背包`
+void MultiplePack(int v, int n){
+    if(v*n>=m){
+        CompletePack(v);
+        return ;
+    }
+    int k=1;
+    while(k<n){
+        ZeroOnePack(k*v);
+         n -= k;
+         k <<= 1;
+    }
+    ZeroOnePack(n*v);
+}
+
+int main(){
+    while(~scanf("%d%d",&n,&m)&& n){
+        for(int i = 0; i < n; i++)
+            scanf("%d",&a[i]);
+        for(int i = 0; i < n; i++)
+            scanf("%d",&c[i]);
+        memset(dp, 0, sizeof dp);
+        for(int i = 0; i < n; i++){
+            MultiplePack(a[i], c[i]);
+        }
+        int cont = 0;
+        for(int i = 1; i <= m; i++)
+            if(dp[i]==i)cont++;
+        printf("%d\n",cont);
+    }
+    return 0;
+}
+\end{lstlisting}
+
+习题:
+
+1. 有n<1000堆石头，第i堆有ai和bi属性，每次拿一堆(假设第i堆)后，所有的石头的a值都减去bi.求最后拿到的a的和的最大值。
+
+直接暴力求解
+
+\begin{lstlisting}
+#include<iostream>
+#include<cstring>
+#include<cstdio>
+#include<algorithm>
+#include<cmath>
+using namespace std;
+
+int a[1111],b[1111];
+int he[1111];
+bool cmp(int a, int b){
+    return a>b;
+}
+int main(){
+    int n;
+    while(~scanf("%d",&n) && n){
+        for(int i = 0; i < n; i++){
+            scanf("%d%d",&a[i],&b[i]);
+        } int ans = -999999;
+        for(int i = 0; i <= n; i++){
+            for(int j = 0; j < n; j++){
+                he[j] = a[j]-b[j]*i;
+            } int temp = 0;
+            sort(he, he+n,cmp);
+            for(int k = 0; k < i; k++){
+                temp += he[k];
+            } ans = max(temp, ans);
+        } printf("%d\n",ans);
+    } return 0;
+}
+\end{lstlisting}
+
+2. 有n堆石头，每拿一堆（假设是第i堆），没有被拿的石头堆的a都要减去bi,求能够拿的a的和的最大值。
+
+a值的顺序对结果没有影响,有影响的是b,从小到大排序.dp[i][j]表示选第i堆时还要选j堆.
+
+dp[i][j] = max(dp[i-1][j],dp[i-1][j+1]+a[i]-b[i]*j)
+
+\begin{lstlisting}
+#include<cstdio>
+#include<iostream>
+#include<cstring>
+#include<algorithm>
+#define maxn 1100
+#define INF 0x3f3f3f3f
+using namespace std;
+
+struct Inf{
+    int a,b;
+}save[maxn];
+
+int dp[maxn][maxn];
+
+bool cmp(struct Inf a, struct Inf b){
+    return a.b<b.b;
+}
+
+int main(){
+    int n;
+    while(~scanf("%d",&n) && n){
+        memset(save, 0, sizeof save);
+        for(int i = 1; i <= n; i++)
+            scanf("%d%d",&save[i].a,&save[i].b);
+        sort(save+1, save+n+1, cmp);
+        memset(dp, -INF, sizeof dp);
+        for(int i = 0; i <= n; i++)dp[0][i]=0;
+        for(int i = 1; i <= n; i++){
+            for(int j = 0; j <= n; j++){
+                dp[i][j] = max(dp[i-1][j], dp[i-1][j+1]+save[i].a-save[i].b*j);
+            }
+        }
+        printf("%d\n",dp[n][0]);
+    }
+    return 0;
+}
+\end{lstlisting}
+
+
+\subsection{分组背包}
+
+习题2:13件装备,戒指可以带两个.盾和武器是单手的.
+
+这里可以先把盾和武器合并放在双手武器中,两个戒指也再合并一下.但是出现了只有一个盾或者只有一个剑的情况,由于数量少,可以把单个剑,单把盾也放在双手武器中,一个戒指也算一对戒指.
+
+然后就是一个背包的问题了.分组背包.
+
+
+\begin{lstlisting}
+`for 所有的组k`
+    for v=V..0
+        `for 所有的i属于组k`
+            f[v]=max{f[v],f[v-c[i]]+w[i]}
+\end{lstlisting}
+
+
+这里我们可以把v设定为耐久度,如果超过v也算作是v,这样减小了内存.
+
+\begin{lstlisting}
+#include<cstdio>
+#include<iostream>
+#include<cstring>
+#include<vector>
+using namespace std;
+char name[20][20]={"Head", "Shoulder", "Neck", "Torso", "Hand", "Wrist", "Waist", "Legs", "Feet", "Finger", "Shield", "Weapon", "Two-Handed"};
+int t,n,m;
+//`记录装备`
+struct Good{
+    int d, h;
+    Good(int d,int h):d(d), h(h){}
+};
+//`从装备类型到编号`
+int getnum(char *s){
+    for(int i = 0; i < 13; i ++){
+        if(strcmp(s, name[i])==0)
+            return i;
+    }
+}
+
+vector<Good> v[13];
+int dp[15][50001];
+
+int main(){
+    char s[20];scanf("%d",&t);
+    int n,d,h,edge;
+    while(t--){
+        for(int i = 0; i < 13; i++)v[i].clear();
+        scanf("%d%d",&n,&edge);
+        for(int i = 0; i < n; i++){
+            scanf("%s%d%d",s,&d,&h);
+            int num = getnum(s);
+            v[num].push_back(Good(d,h));
+            //`把武器盾放在双手持器中`
+            if(num==11 || num== 10){
+                v[12].push_back(Good(d,h));
+            }
+        }
+
+        for(int i = 0; i < v[11].size(); i++){
+            for(int j = 0; j < v[10].size(); j++){
+                v[12].push_back(Good(v[11][i].d+v[10][j].d, v[11][i].h+v[10][j].h));
+            }
+        }
+        //`清空武器和盾,并存放戒指的结合`
+        v[10].clear();v[11].clear();
+        for(int i = 0; i < v[9].size(); i++){
+            v[10].push_back(v[9][i]);
+            for(int j = i+1; j < v[9].size(); j++){
+                v[10].push_back(Good(v[9][i].d+v[9][j].d, v[9][i].h+v[9][j].h));
+            }
+        }
+        v[9].clear();
+
+        memset(dp, -1, sizeof dp);
+        dp[13][0] = 0;
+/*
+        for(int i = 0; i < v[12].size(); i++){
+            Good g = v[12][i];
+            int vh = g.h > edge?edge: g.h;
+            int vd = g.d;
+            dp[11][vh] = max(dp[11][vh], vd);
+        }
+*/
+        for(int k = 12; k >= 0; k--){
+            for(int j = 0; j <= edge; j++){
+                dp[k][j] = max(dp[k][j], dp[k+1][j]);
+                if(dp[k+1][j] == -1)continue;
+                for(int i = 0; i < v[k].size(); i++){
+                    Good g = v[k][i];
+                    int vh = (g.h+j)>edge?edge:(g.h+j);
+                    int vd = g.d + dp[k+1][j];
+                    dp[k][vh] = max(dp[k][vh], vd);
+                }
+            }
+        } printf("%d\n",dp[0][edge]);
+    }
+}
+\end{lstlisting}
+
+习题三:分组背包lcm;
+
+一个数n分成$a_1+a_2+...+a_k$, 求最大的划分使得$lcm(a_1,a_2,...,a_k)$最大.首先确认a之间是两两互质的,否则可以马上提出他的gcd()作为一个新的数.
+
+所以最后的答案其实就是$p_1^{k_1}p_2^{k_2} ...p_s^{k_s}$,而我们只要找符合条件的最大值就行.考虑dp.也就是完全背包.
+
+首先打一个质数表.然后从第一位开始更新.因为如果是所有的质数lcm,会炸llong long,考虑用对数记录最大值.
+
+第一层考虑第几个质数,第二层考虑weight,由于可以分解为1,也就是说背包不需要填满,从n开始是因为每一个质数的n次方中只能取一个,这就想当是一个分组背包了.
+
+按照伪代码写.并跟新ans
+
+\begin{lstlisting}
+#include<cstdio>
+#include<iostream>
+#define ll long long
+#include<bitset>
+#include<cmath>
+#define maxn 3600
+using namespace std;
+
+ll gcd(ll a, ll b){
+    return b?gcd(b,a%b):a;
+}
+
+bitset<maxn> judge;
+int prime[maxn];
+int tot=0;
+void init(){
+    for(int i = 2; i < maxn; i++){
+        if(!judge[i]){
+            prime[tot++]=i;
+            for(int j = i+i; j < maxn; j+=i){
+                judge[j]=1;
+            }
+        }
+    }
+}
+
+double dp[maxn];
+ll ans[maxn];
+
+int main(){
+    init();
+    int n,m;
+    while(~scanf("%d %d",&n,&m)){
+        for(int i = 0; i <= n; i++){
+            dp[i]=0;
+            ans[i]=1;
+        }
+        for(int i = 0; i < tot && prime[i]<=n; i++){
+            double tmp = log(prime[i]*1.0);
+            for(int j = n; j >= prime[i]; j--){
+                for(ll k = prime[i], q=1; k <= j; k*=prime[i], q++){
+                    if(dp[j-k]+q*tmp>dp[j]){
+                        dp[j] = dp[j-k]+q*tmp;
+                        ans[j] = ans[j-k]*k%m;
+                    }
+                }
+            }
+        }
+        printf("%lld\n",ans[n]);
+    }
+    return 0;
+}
+\end{lstlisting}
+
+
+
+
+{\bfseries 习题四,完全背包有取值上限的.}
+
+n组ai,bi中挑选m组使得和ai-和bi的绝对值最大,如果有相同的,选ai+bi和最大的那种,输出m组ai的和和bi的和,并且输出相应的组数.
+
+\begin{lstlisting}
+#include<cstdio>
+#include<iostream>
+#include<cstring>
+#include<cmath>
+#include<algorithm>
+#include<vector>
+using namespace std;
+
+int dp[22][888];//dp[j][k]`:取j个候选人，使其辩控差为k的所有方案中，辩控和最大的方案的辩控和`
+vector<int> path[22][888];
+int n,m;
+int p[222],d[222],s[222],v[222];
+
+int main(){
+    int t=0;
+    while(~scanf("%d%d",&n,&m) && n){
+        for(int i = 0; i <= m; i++){
+            for(int j = 0; j < 881 ; j++)path[i][j].clear();
+        } memset(dp, -1, sizeof dp);
+        for(int i = 1; i <= n; i++){
+            scanf("%d %d", &p[i], &d[i]);
+            s[i] = p[i] + d[i];
+            v[i] = p[i] - d[i];
+        }
+        //`修正.`
+        int fix = m*20;
+        //`即真正的dp[0][0]`
+        dp[0][fix]=0;
+        int i,j,k;
+        for(i = 1; i <= n; i++)
+        for(j = m; j > 0; j--)
+        for(k = 0; k < 2*fix; k++){
+            if(dp[j-1][k] < 0)continue;
+            if(dp[j][k+v[i]] <= dp[j-1][k] + s[i]){
+                dp[j][k+v[i]] = dp[j-1][k] + s[i];
+                path[j][k+v[i]] = path[j-1][k];
+                path[j][k+v[i]].push_back(i);
+            }
+        }
+        //output
+        int div;
+        for(i = 0; dp[m][fix+i]==-1 && dp[m][fix-i]==-1; i++);
+        div = (dp[m][fix+i]>dp[m][fix-i])?i:-i;
+        printf("Jury #%d\n",++t);
+        printf("Best jury has value %d for prosecution and value %d for defence:\n",(dp[m][fix+div] + div)/2,(dp[m][div+fix]-div)/2);
+        for(i = 0; i < m; i++)
+            printf(" %d",path[m][fix+div][i]);
+        puts("");puts("");
+    } return 0;
+}
+\end{lstlisting}
+
+\subsubsection{多重集组合数DP}
+
+题目: 有n种物品, 第i种物品有a个. 不同种类的物品可以互相区分, 但相同种类的无法区分.
+
+从这些物品中取出m个, 有多少种取法? 求出数模M的余数.
+
+例如: 有n=3种物品, 每种a={1,2,3}个, 取出m=3个, 取法result=6(0+0+3, 0+1+2, 0+2+1, 1+0+2, 1+1+1, 1+2+0).
+
+dp[i][j]表示前i种物品一共拿了j个物品的方法数.
+
+所以有$dp[i][j]= \sum_{k=0}^{min(j,x[i])}  dp[i-1][j-k]$
+
+这样的复杂度是O(nm*m)
+
+分情况讨论:
+
+1. $j<=x[i]$时
+
+把最后一项单独拿出来,前面的进行合并于是就有$dp[i][j] = dp[i-1][j] + \sum_{k=0}^{j-1}dp[i-1][j-1-k]$
+
+也就是说dp[i][j] = dp[i-1][j] + dp[i-1][j]
+
+1. $j>x[i]$时
+
+这时存在$dp[i][j]  = dp[i-1][j] + \sum_{k=0}^{x[i]-1}dp[i-1][j-1-k]$
+
+即dp[i][j] = dp[i-1][j] + dp[i][j-1] - dp[i][j-1-x[i]]  
+
+递推式:
+
+\begin{lstlisting}
+for(int i = 0; i < n; i++)for(int j = 1; j <= m; j++)
+if(j>a[i])dp[i+1][j] = (dp[i][j] + dp[i+1][j-1] - dp[i][j-1-x[i]] + mod)%mod;
+else dp[i+1][j] = (dp[i][j] +dp[i+1][j-1])%mod;
+\end{lstlisting}
+
+
+
+\subsection{状压dp}
+
+
+\begin{lstlisting}
+//`n为总元素个数,m为选中个数,i为状态。`
+for (int i = (1<<m)-1; i < (1<<n);){
+    for (int j = 0; j < n; j++) ans = max(ans, dp[i][j]);
+    int x = i&-i;int y = i+x;
+    i = ((i&~y)/x>>1)|y;
+}
+
+for(i=s;i;i=(i-1)&s);//`枚举s子集`
+\end{lstlisting}
+
+
+\subsection{数位dp}
+
+
+\begin{lstlisting}
+#include<cstdio>
+#include<iostream>
+#include<cstring>
+#define ll long long
+const int maxn = 17;
+using namespace std;
+ll dp[maxn], a[maxn], ten[maxn] = {1};
+
+void init(){
+    for(int i = 1; i < maxn; i++) ten[i] = ten[i-1]*10;
+}
+
+int cnt(int n){
+    int ans = 0;
+    while(n){
+        ans += ((n%10)==1); n /= 10;
+    } return ans;
+}
+
+ll dfs(int pos, ll num, int v, int limit){
+    if(pos==-1)return v;
+    if(!limit && dp[pos]!=-1)return dp[pos]+v*ten[pos+1];
+    ll ans = 0;
+    int ed = (limit?a[pos]:9);
+    for(int i = 0; i <= ed; i++){
+        ans += dfs(pos-1, (num*10+i), v+(i==1), limit&&(i==ed));
+    } if(!limit)dp[pos] = ans;
+    return ans;
+}
+
+ll slove(int x){
+    int pos = 0;
+    memset(dp, - 1, sizeof dp);
+    while(x){
+        a[pos++] = x%10;
+        x /= 10;
+    } return dfs(pos-1,0,0,1);
+}
+
+int main(){
+    int n;
+    init();
+    while(~scanf("%d",&n)){
+        printf("%lld\n",slove(n));
+    } return 0;
+}
+\end{lstlisting}
+
+
+
+\subsection{常见dp}
+
+最大字段和： 给定一个数列a, 求最大的连续字段和的最大值
+
+\begin{lstlisting}
+ll slove(ll a[]) {
+    memset(dp, 0, sizeof dp);
+    for(int i = 1; i <= n; i++) {
+        dp[i] = max(dp[i], dp[i-1]+a[i]);
+    } return *max_element(dp, dp+n+1);
+}
+\end{lstlisting}
+
+循环字段和：$a[i],a[i+1],a[i+2],...a[j\%n]$
+
+
+\begin{lstlisting}
+#include <bits/stdc++.h>
+const int N = 5e4+9;
+using namespace std;
+using ll = long long;
+ll dp[N], n, a[N];
+ll slove(ll a[]) {
+    memset(dp, 0, sizeof dp);
+    for(int i = 1; i <= n; i++) {
+        dp[i] = max(dp[i], dp[i-1]+a[i]);
+    } return *max_element(dp, dp+n+1);
+}
+
+int main() {
+    scanf("%lld", &n); ll sum = 0;
+    for (int i = 1; i <= n; i++) scanf("%lld", &a[i]), sum += a[i];
+    ll ans = slove(a);
+    for (int i = 1; i <= n; i++) a[i] = -a[i];
+    return printf("%lld\n", max(ans, sum+slove(a))), 0;
+}
+\end{lstlisting}
+
+最大子矩阵和：一个M*N的矩阵种找一个子矩阵且这个和是最大的，输出和
+
+枚举行的上界和下界，这样就变成了最大子矩阵和
+
+\begin{lstlisting}
+#include<bits/stdc++.h>
+const int N = 555;
+using namespace std;
+using ll = long long;
+ll a[N][N];
+int n, m, t;
+int main() {
+    while(~scanf("%d%d",&m,&n)) {
+        memset(a,0,sizeof(a));
+        for(int i=1;i<=n;i++) {
+            for(int j=1;j<=m;j++) {
+                scanf("%d",&t); a[i][j]=a[i-1][j]+t;
+            }
+        } ll ans=0;
+        for(int i=1;i<=n;i++) {
+            for(int j=i;j<=n;j++) {
+                ll sum=0;
+                for(int k=1;k<=m;k++) {
+                    sum+=(a[j][k]-a[i-1][k]);
+                    sum=max(sum, 0LL); ans=max(ans, sum);
+                }
+            }
+        } printf("%lld\n", ans);
+    }
+}
+\end{lstlisting}
+
+最小正子段和
+
+\begin{lstlisting}
+#include <bits/stdc++.h>
+const int N = 5e4+9;
+using namespace std;
+using ll = long long;
+ll a[N], n;
+int idx[N];
+bool cmp(int x, int y) { return a[x] < a[y]; }
+
+int main() {
+    scanf("%lld", &n);
+    for (int i = 1; i <= n; i++) scanf("%lld", &a[i]), a[i]+=a[i-1], idx[i]=i;
+    sort(idx, idx+n+1, cmp);
+    ll ans = 1e9+7;
+    for (int i = 1; i <= n; i++) {
+        if(idx[i]>idx[i-1] && a[idx[i]] > a[idx[i-1]]) ans = min(ans, a[idx[i]]-a[idx[i-1]]);
+    } printf("%lld\n", ans);
+}
+\end{lstlisting}
+
+最大M字段和 v2
+
+N个整数组成的序列a[1],a[2],a[3],…,a[n]，将这N个数划分为互不相交的M个子段，并且这M个子段的和是最大的。如果M >= N个数中正数的个数，那么输出所有正数的和。
+例如：-2 11 -4 13 -5 6 -2，分为2段，11 -4 13一段，6一段，和为26。
+
+\begin{lstlisting}
+#include <bits/stdc++.h>
+const int N = 2e5+9;
+using namespace std;
+using ll = long long;
+
+int n, m, t, l[N], r[N];
+ll Heap[N], si;
+ll v[N], x;
+
+bool cmp(int a, int b) { return abs(v[a]) > abs(v[b]); }
+inline void push(int x) { Heap[++si] = x; push_heap(Heap+1, Heap+1+si, cmp); }
+inline void pop() { pop_heap(Heap+1, Heap+1+si--, cmp); }
+inline void Merge(int L, int R, int p) {
+    v[p]+=v[L]+v[R]; L = l[L], R=r[R];
+    l[p]=L; r[L]=p; l[R]=p; r[p]=R;
+}
+
+int main() {
+    scanf("%d%d", &n, &m);
+    for (int i = 1; i <= n; i++) {
+        scanf("%lld", &x);
+        if(!x) continue;
+        if(v[t]*x<=0) v[++t] = x;
+        else v[t] += x;
+    } ll ans = 0; n = t;
+    l[0]=0; r[0]=1; l[t+1]=n; r[t+1]=t+1;
+    for (int i = 1; i <= t; i++) {
+        l[i] = i-1; r[i] = i+1; push(i);
+        if(v[i] > 0) m--, ans += v[i];
+    }
+    while(m<0) {
+        int p = Heap[1], lp=l[p], rp=r[p]; pop();
+        if(r[lp] != p || l[rp] != p) continue;
+        if(v[p] < 0 && (lp < 1 || n < rp)) continue;
+        if(!v[p]) continue;
+        ans -= abs(v[p]); m++; Merge(lp, rp, p); push(p);
+    } return printf("%lld\n", ans), 0;
+}
+\end{lstlisting}
+
+最大子段和 V2
+
+N个整数组成的序列a[1],a[2],a[3],…,a[n]，你可以对数组中的一对元素进行交换，并且交换后求a[1]至a[n]的最大子段和，所能得到的结果是所有交换中最大的。当所给的整数均为负数时和为0。
+例如：{-2,11,-4,13,-5,-2, 4}将 -4 和 4 交换，{-2,11,4,13,-5,-2, -4}，最大子段和为11 + 4 + 13 = 28。
+
+\begin{lstlisting}
+
+#include <bits/stdc++.h>
+const int N = 5e4+9;
+using namespace std;
+using ll = long long;
+int n;
+pair<ll, ll> st;
+ll inf = 1LL<<55;
+ll a[N], mx[N], sum[N], ans;
+
+void slove(){
+    a[n+1]=-inf;
+    for (int i = n; i; i--) {
+        mx[i] = max(mx[i+1], a[i]);
+        sum[i] = sum[i+1] + a[i];
+    }
+    int k = 0;
+    ll pre=-inf, aft=-inf;
+    for (int i = 1; i <= n; i++) {
+        pre = max(pre, sum[i]);
+        aft = max(aft, pre-a[i]);
+        ans = max(ans, aft - sum[i+1] + mx[i+1]);
+    }
+}
+
+int main() {
+    scanf("%d", &n);
+    for (int i = 1; i <= n; i++) {
+        scanf("%lld", &a[i]);
+    } slove(); reverse(a+1, a+n+1); slove();
+    return printf("%lld\n", ans), 0;
+}
+
+\end{lstlisting}
+
+最大字段和 V3
+
+环形最大M子段和，N个整数组成的序列排成一个环，a[1],a[2],a[3],…,a[n]（a[n-1], a[n], a[1]也可以算作1段），将这N个数划分为互不相交的M个子段，并且这M个子段的和是最大的。如果M >= N个数中正数的个数，那么输出所有正数的和。
+例如：-2 11 -4 13 -5 6 -1，分为2段，6 -1 -2 11一段，13一段，和为27。
+
+
+\begin{lstlisting}
+#include <bits/stdc++.h>
+const int N = 2e5+9;
+using namespace std;
+using ll = long long;
+
+int n, m, t, l[N], r[N];
+ll Heap[N], si;
+ll v[N], x;
+
+bool cmp(int a, int b) { return abs(v[a]) > abs(v[b]); }
+inline void push(int x) { Heap[++si] = x; push_heap(Heap+1, Heap+1+si, cmp); }
+inline void pop() { pop_heap(Heap+1, Heap+1+si--, cmp); }
+inline void Merge(int L, int R, int p) {
+    v[p]+=v[L]+v[R]; L = l[L], R=r[R];
+    l[p]=L; r[L]=p; l[R]=p; r[p]=R;
+}
+
+int main() {
+    scanf("%d%d", &n, &m);
+    for (int i = 1; i <= n; i++) {
+        scanf("%lld", &x);
+        if(!x) continue;
+        if((v[t]<=0 && x>0) || (v[t]>=0 && x <0)) v[++t] = x;
+        else v[t] += x;
+    } ll ans = 0;
+    if(v[1]*v[t]>=0 && t > 1) { v[1] += v[t]; t--; } n = t;
+    for (int i = 1; i <= t; i++) {
+        l[i] = i-1; r[i] = i+1; push(i);
+        if(v[i] > 0) m--, ans += v[i];
+    } l[1] = t; r[t] = 1;
+    while(m<0) {
+        int p = Heap[1], lp=l[p], rp=r[p]; pop();
+        if(r[lp] != p || l[rp] != p) continue;
+        if(v[p] < 0 && (lp < 1 || n < rp)) continue;
+        if(!v[p]) continue;
+        ans -= abs(v[p]); m++; Merge(lp, rp, p); push(p);
+    } return printf("%lld\n", ans), 0;
+}
+\end{lstlisting}
+
+LCS 最长公共子序列
+
+\begin{lstlisting}
+#include <bits/stdc++.h>
+
+using namespace std;
+const int N = 1e3+9;
+char s1[N], s2[N];
+int dp[N][N], n, m;
+vector<char> ans;
+
+int main() {
+    while(~scanf("%s%s",s1+1,s2+1)) {
+        memset(dp, 0, sizeof dp);
+        n = strlen(s1+1); m = strlen(s2+1);
+        for (int i = 1; i <= n; i++) {
+            for (int j = 1; j <= m; j++) {
+                if(s1[i] == s2[j]) {
+                    dp[i][j] = dp[i-1][j-1] + 1;
+                } else dp[i][j] = max(dp[i-1][j], dp[i][j-1]);
+            }
+        } ans.clear();
+        int len = dp[n][m];
+        while(dp[n][m]) {
+            if(dp[n][m] == dp[n-1][m]) n--;
+            else if(dp[n][m] == dp[n][m-1]) m--;
+            else ans.push_back(s1[n]), n--, m--;
+        }
+        for (int i = len-1; ~i; i--) {
+            printf("%c", ans[i]);
+        } puts("");
+    } return 0;
+}
+\end{lstlisting}
+
+
+
