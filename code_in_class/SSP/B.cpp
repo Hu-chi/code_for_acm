@@ -24,7 +24,7 @@ struct Node {
 };
 
 int dijkstra(int s, int t) {
-	for (int i = 0; i <= n; i++) 
+	for (int i = 0; i <= n; i++)
 		for (int j = 0; j <= 11; j++)
 			d[i][j] = inf;
 	d[s][0] = 0;
@@ -32,23 +32,24 @@ int dijkstra(int s, int t) {
 	q.push({d[s][0], s, 0});
 	while(!q.empty()) {
 		Node tp = q.top(); q.pop();
-		int u = tp.id; 
+		int u = tp.id;
 		for (int i = head[u]; ~i; i = e[i].nxt) {
 			int v = e[i].v;
-			if(d[v][tp.t+1] > d[u][tp.t]) {
+			if(d[v][tp.t+1] > d[u][tp.t] && tp.t < k) {
 				d[v][tp.t+1] = d[u][tp.t];
-				q.push({d[v][tp.t+1], v, tp.t+1});
-			} 
+        q.push({d[v][tp.t+1], v, tp.t+1});
+			}
 			if(d[v][tp.t] > d[u][tp.t] + e[i].w) {
 				d[v][tp.t] = d[u][tp.t] + e[i].w;
 				q.push({d[v][tp.t], v, tp.t});
 			}
 		}
 	}
-	for (int i = 0; i < n; i++) {
-		printf("%d ", d[i][0]);
+	int mi = inf;
+	for (int i = 0; i <= k; i++) {
+    mi = min(mi, d[t][i]);
 	}
-	return -1;
+	return mi;
 }
 
 int main() {
@@ -61,6 +62,5 @@ int main() {
 	}
 	int ans = dijkstra(s, t);
 	printf("%d\n", ans);
-	scanf("%d", n);
 	return 0;
 }
